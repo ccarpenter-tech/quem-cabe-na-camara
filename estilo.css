@@ -1,0 +1,110 @@
+/* ===== Cores e fontes (mude aqui para mudar a página toda) ===== */
+:root {
+  --fundo: #fbfaf7;
+  --texto: #1f1f1f;
+  --suave: #6b6b6b;
+  --eleito: #d95f02;     /* laranja: eleito */
+  --destaque: #7b2cbf;   /* roxo: o grupo em destaque */
+  --base: #cfcfcf;       /* cinza: o resto */
+  --linha: #e4e1da;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+h1, h2, h3, .chapeu, .numero-ato, button, legend, label, .legenda, .rotulo-resultado {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ===== Capa ===== */
+.capa {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  max-width: 760px; margin: 0 auto; padding: 0 20px;
+}
+.chapeu { text-transform: uppercase; letter-spacing: .12em; font-size: 14px; color: var(--eleito); }
+h1 { font-size: clamp(44px, 8vw, 84px); line-height: 1.02; margin: .2em 0; }
+.linha-fina { font-size: 23px; }
+.rolar { color: var(--suave); margin-top: 2em; }
+
+/* ===== Atos ===== */
+.ato { max-width: 960px; margin: 0 auto; padding: 90px 20px; border-top: 1px solid var(--linha); }
+.numero-ato { text-transform: uppercase; letter-spacing: .1em; font-size: 14px; color: var(--suave); }
+h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: .2em 0 .4em; }
+.explica { color: var(--suave); max-width: 640px; }
+.nota { font-size: 15px; color: var(--suave); max-width: 640px; }
+.destaque { background: var(--destaque); color: white; padding: 0 .3em; border-radius: 3px; }
+.numero-grande { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 44px;
+  font-weight: bold; margin: .2em 0; }
+
+/* ===== Ato 1: rolagem com gráfico fixo ===== */
+.rolagem { display: grid; grid-template-columns: 3fr 2fr; gap: 30px; max-width: 1200px; }
+.grafico-fixo { position: sticky; top: 8vh; height: 84vh;
+  display: flex; flex-direction: column; justify-content: center; }
+#funil { width: 100%; height: auto; }
+.passos { padding: 40vh 0; }
+.passo { min-height: 70vh; display: flex; flex-direction: column; justify-content: center;
+  opacity: .25; transition: opacity .4s; }
+.passo.ativo { opacity: 1; }
+.passo p { background: var(--fundo); padding: 10px 0; }
+
+.legenda { display: flex; flex-wrap: wrap; gap: 16px; font-size: 15px; margin-top: 10px; }
+.legenda span::before { content: ""; display: inline-block; width: 12px; height: 12px;
+  border-radius: 50%; margin-right: 6px; vertical-align: -1px; background: var(--cor); }
+
+/* ===== Ato 2: botões e hemiciclo ===== */
+.botoes { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rotulo-botoes { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 15px;
+  color: var(--suave); width: 80px; }
+button { font-size: 15px; padding: 8px 14px; border: 1px solid var(--texto);
+  background: white; border-radius: 20px; cursor: pointer; }
+button.ativo { background: var(--texto); color: white; }
+#hemiciclo { width: 100%; max-width: 760px; display: block; margin: 20px auto 0; }
+#hemiciclo circle { transition: fill .8s; }
+
+/* ===== Ato 3: barras ===== */
+.linha-peso { display: grid; grid-template-columns: 230px 1fr; gap: 12px; align-items: center;
+  margin: 14px 0; font-family: "Helvetica Neue", Arial, sans-serif; font-size: 16px; }
+.barra-peso { height: 34px; background: var(--eleito); border-radius: 3px; color: white;
+  font-weight: bold; display: flex; align-items: center; padding-left: 10px; min-width: 60px; }
+
+/* ===== Ato 4: teste ===== */
+fieldset { border: none; border-top: 1px solid var(--linha); padding: 14px 0; margin: 0; }
+legend { font-weight: bold; padding: 0; margin-bottom: 8px; }
+label { display: inline-block; margin: 4px 16px 4px 0; font-size: 16px; cursor: pointer; }
+.botao-principal { margin-top: 20px; font-size: 18px; padding: 12px 26px;
+  background: var(--eleito); border-color: var(--eleito); color: white; }
+#resultado { margin-top: 40px; padding: 30px; background: white; border-radius: 10px;
+  box-shadow: 0 2px 14px rgba(0,0,0,.08); }
+.rotulo-resultado { text-transform: uppercase; letter-spacing: .1em; font-weight: bold;
+  color: var(--eleito); margin: 0; }
+.eixo { display: grid; grid-template-columns: 170px 1fr; gap: 12px; margin: 16px 0;
+  font-family: "Helvetica Neue", Arial, sans-serif; font-size: 15px; align-items: center; }
+.eixo .barras div { height: 16px; border-radius: 2px; margin: 3px 0; font-size: 12px;
+  color: var(--texto); white-space: nowrap; }
+.eixo .b-cand { background: var(--base); }
+.eixo .b-eleito { background: var(--eleito); }
+.eixo .barras span { margin-left: 6px; position: relative; left: 100%; }
+
+/* ===== Rodapé ===== */
+footer { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; font-size: 16px;
+  color: var(--suave); border-top: 1px solid var(--linha); }
+
+/* ===== Celular ===== */
+@media (max-width: 760px) {
+  body { font-size: 17px; }
+  .rolagem { grid-template-columns: 1fr; }
+  .grafico-fixo { top: 0; height: 55vh; background: var(--fundo); z-index: 1; }
+  .passos { padding: 10vh 0 30vh; position: relative; z-index: 2; }
+  .passo { min-height: 60vh; }
+  .linha-peso { grid-template-columns: 1fr; }
+  .eixo { grid-template-columns: 1fr; }
+}

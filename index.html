@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quem cabe na Câmara?</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+  <!-- ===== CAPA ===== -->
+  <header class="capa">
+    <p class="chapeu">Eleições 2026 · Uma análise de dados</p>
+    <h1>Quem cabe na Câmara?</h1>
+    <p class="linha-fina">
+      Em 2026, <b id="n-cand"></b> pessoas disputaram uma vaga de presidente, governador,
+      senador ou deputado. Só <b id="n-eleitos"></b> chegaram lá.
+      E quem chegou não se parece com o Brasil.
+    </p>
+    <p class="rolar">Role para baixo ↓</p>
+  </header>
+
+  <!-- ===== ATO 1: O FUNIL ===== -->
+  <section id="ato1" class="ato rolagem">
+    <div class="grafico-fixo">
+      <canvas id="funil"></canvas>
+      <div class="legenda" id="legenda-funil"></div>
+    </div>
+    <div class="passos">
+      <div class="passo" data-passo="0">
+        <p class="numero-ato">Ato 1 · O funil</p>
+        <p>Cada ponto é uma das <b id="p0-cand"></b> candidaturas de 2026, do presidente ao
+          deputado distrital.</p>
+      </div>
+      <div class="passo" data-passo="1">
+        <p>Só <b id="p1-eleitos"></b> se elegeram, ou <b id="p1-taxa"></b> do total.
+          Em média, <b>1 em cada <span id="p1-um-em"></span></b> candidatos.
+          Eles aparecem à direita.</p>
+      </div>
+      <div class="passo" data-passo="2">
+        <p><span class="destaque">Mulheres</span> eram <b id="p2-cand"></b> das candidaturas.
+          Entre os eleitos, são <b id="p2-el"></b>.</p>
+      </div>
+      <div class="passo" data-passo="3">
+        <p><span class="destaque">Pessoas negras</span> (pretas e pardas) eram <b id="p3-cand"></b>
+          dos candidatos, quase metade. Entre os eleitos, são <b id="p3-el"></b>.</p>
+      </div>
+      <div class="passo" data-passo="4">
+        <p>As <span class="destaque">mulheres negras</span> são o grupo que mais perde espaço:
+          de <b id="p4-cand"></b> dos candidatos para <b id="p4-el"></b> dos eleitos.</p>
+      </div>
+      <div class="passo" data-passo="5">
+        <p>Já quem declarou <span class="destaque">patrimônio acima de R$ 1 milhão</span> era
+          <b id="p5-cand"></b> dos candidatos e é <b id="p5-el"></b> dos eleitos.</p>
+      </div>
+      <div class="passo" data-passo="6">
+        <p>E quem <span class="destaque">já tinha mandato político</span> era <b id="p6-cand"></b>
+          dos candidatos. Entre os eleitos, <b id="p6-el"></b>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ATO 2: O HEMICICLO ===== -->
+  <section id="ato2" class="ato">
+    <p class="numero-ato">Ato 2 · A Câmara que poderia ter sido</p>
+    <h2>Se a Câmara refletisse o Brasil, ela seria outra</h2>
+    <p class="explica">As 513 cadeiras da Câmara dos Deputados. Compare a Câmara eleita em 2026
+      com a que teríamos se ela tivesse o mesmo perfil dos candidatos, ou da população.</p>
+
+    <div class="botoes" id="botoes-dimensao">
+      <span class="rotulo-botoes">Mostrar:</span>
+      <button data-dimensao="genero" class="ativo">Gênero</button>
+      <button data-dimensao="raca">Raça</button>
+    </div>
+    <div class="botoes" id="botoes-cenario">
+      <span class="rotulo-botoes">Câmara:</span>
+      <button data-cenario="real" class="ativo">Eleita em 2026</button>
+      <button data-cenario="candidatos">Com o perfil dos candidatos</button>
+      <button data-cenario="brasil">Com o perfil do Brasil</button>
+    </div>
+
+    <svg id="hemiciclo" viewBox="0 0 600 330"></svg>
+    <p class="numero-grande" id="hemi-numero"></p>
+    <div class="legenda" id="legenda-hemi"></div>
+  </section>
+
+  <!-- ===== ATO 3: O QUE PESA MAIS ===== -->
+  <section id="ato3" class="ato">
+    <p class="numero-ato">Ato 3 · O que pesa mais</p>
+    <h2>Já ter mandato pesa mais do que qualquer outra característica</h2>
+    <p class="explica">Quantas vezes maior é a chance de se eleger, comparando candidatos ao
+      Legislativo que são iguais em todo o resto (regressão logística).</p>
+    <div id="barras-peso"></div>
+    <p class="nota">Leitura: “× 2” quer dizer que a chance é duas vezes maior.
+      São associações observadas em 2026, não causas.</p>
+  </section>
+
+  <!-- ===== ATO 4: O TESTE ===== -->
+  <section id="ato4" class="ato">
+    <p class="numero-ato">Ato 4 · E você?</p>
+    <h2>Você caberia na Câmara?</h2>
+    <p class="explica">Responda 7 perguntas sobre o seu perfil e veja como pessoas como você se
+      saíram nas eleições de 2026.</p>
+
+    <form id="teste">
+      <fieldset><legend>1. A qual cargo você se candidataria?</legend>
+        <label><input type="radio" name="cargo" value="Deputado Estadual" checked> Deputado(a) estadual</label>
+        <label><input type="radio" name="cargo" value="Deputado Federal"> Deputado(a) federal</label>
+        <label><input type="radio" name="cargo" value="Senador"> Senador(a)</label>
+        <label><input type="radio" name="cargo" value="Deputado Distrital"> Deputado(a) distrital (DF)</label>
+      </fieldset>
+      <fieldset><legend>2. Gênero</legend>
+        <label><input type="radio" name="genero" value="Feminino" checked> Mulher</label>
+        <label><input type="radio" name="genero" value="Masculino"> Homem</label>
+      </fieldset>
+      <fieldset><legend>3. Cor/raça</legend>
+        <label><input type="radio" name="raca" value="Branca" checked> Branca</label>
+        <label><input type="radio" name="raca" value="Negra"> Preta ou parda</label>
+        <label><input type="radio" name="raca" value="Outras"> Indígena ou amarela</label>
+      </fieldset>
+      <fieldset><legend>4. Idade</legend>
+        <label><input type="radio" name="faixa_etaria" value="18–29" checked> 18 a 29</label>
+        <label><input type="radio" name="faixa_etaria" value="30–39"> 30 a 39</label>
+        <label><input type="radio" name="faixa_etaria" value="40–49"> 40 a 49</label>
+        <label><input type="radio" name="faixa_etaria" value="50–59"> 50 a 59</label>
+        <label><input type="radio" name="faixa_etaria" value="60–69"> 60 a 69</label>
+        <label><input type="radio" name="faixa_etaria" value="70+"> 70 ou mais</label>
+      </fieldset>
+      <fieldset><legend>5. Você tem ensino superior completo?</legend>
+        <label><input type="radio" name="superior" value="Sim" checked> Sim</label>
+        <label><input type="radio" name="superior" value="Não"> Não</label>
+      </fieldset>
+      <fieldset><legend>6. Patrimônio (soma dos seus bens)</legend>
+        <label><input type="radio" name="faixa_patrimonio" value="Nada declarado" checked> Nenhum bem</label>
+        <label><input type="radio" name="faixa_patrimonio" value="Até 100 mil"> Até R$ 100 mil</label>
+        <label><input type="radio" name="faixa_patrimonio" value="100 mil–1 mi"> De R$ 100 mil a R$ 1 milhão</label>
+        <label><input type="radio" name="faixa_patrimonio" value="1–10 mi"> De R$ 1 a 10 milhões</label>
+        <label><input type="radio" name="faixa_patrimonio" value="Mais de 10 mi"> Mais de R$ 10 milhões</label>
+      </fieldset>
+      <fieldset><legend>7. Você já tem mandato político (vereador, deputado, prefeito…)?</legend>
+        <label><input type="radio" name="tem_mandato" value="Não" checked> Não</label>
+        <label><input type="radio" name="tem_mandato" value="Sim"> Sim</label>
+      </fieldset>
+      <button type="submit" class="botao-principal">Ver meu resultado</button>
+    </form>
+
+    <div id="resultado" hidden>
+      <p class="rotulo-resultado" id="res-rotulo"></p>
+      <p class="numero-grande" id="res-chance"></p>
+      <p id="res-frase"></p>
+      <h3>Seu perfil, eixo por eixo</h3>
+      <p class="explica">Barra cinza: % de pessoas como você entre os <b>candidatos</b>.
+        Barra laranja: entre os <b>eleitos</b>.</p>
+      <div id="res-eixos"></div>
+      <p class="nota">A chance é estimada por uma regressão logística com os candidatos ao
+        Legislativo de 2026. Ela mostra o que aconteceu com perfis parecidos, não prevê o futuro
+        de ninguém.</p>
+    </div>
+  </section>
+
+  <!-- ===== RODAPÉ ===== -->
+  <footer>
+    <h2>Metodologia</h2>
+    <p>Dados: Portal de Dados Abertos do TSE (candidatos, bens declarados e votação de 2026) e
+      Censo 2022 do IBGE (51,5% de mulheres; 55,5% de pessoas pretas e pardas).</p>
+    <p>Recorte: candidatos que estiveram na urna para presidente, governador, senador e deputado
+      federal, estadual e distrital. Vices e suplentes não entram, porque não recebem votos
+      próprios. Patrimônio e cor/raça são autodeclarados. "Mandato" foi aproximado pela
+      ocupação declarada.</p>
+    <p>Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · Carolina Carpenter · 2026</p>
+  </footer>
+
+  <script src="dados.js"></script>
+  <script src="grafico.js"></script>
+</body>
+</html>
