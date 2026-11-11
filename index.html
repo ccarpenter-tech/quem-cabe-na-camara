@@ -2,7 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- app no celular (PWA) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#16141d">
+  <link rel="apple-touch-icon" href="icone-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quem cabe?">
   <title>Quem cabe na Câmara?</title>
   <!-- prévia do link no WhatsApp e nas redes (troque SEU-USUARIO pelo seu usuário do GitHub) -->
   <meta name="description" content="Quem se candidatou e quem se elegeu em 2026: uma investigação em dados sobre o filtro das urnas.">
@@ -14,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;600;800&family=Space+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="estilo.css?v=7">
+  <link rel="stylesheet" href="estilo.css?v=8">
 </head>
 <body>
 
@@ -44,6 +51,9 @@
         chegaram lá. E quem chegou não se parece com o Brasil.
       </p>
       <p class="rolar">Role para descer <span>↓</span></p>
+      <button id="instalar" class="botao-instalar" type="button" hidden>Instalar como app</button>
+      <p id="dica-ios" class="dica-ios" hidden>Para instalar no iPhone: toque em <b>Compartilhar</b> e depois em
+        <b>Adicionar à Tela de Início</b>.</p>
     </div>
   </header>
 
@@ -230,6 +240,38 @@
     <div class="caixa-decomp" id="decomp"></div>
     <details class="tabela"><summary>Ver os números</summary><div id="tab-hemi"></div></details>
 
+    <div class="bloco-extra simulador" id="simulador">
+      <h3>Monte a sua Câmara</h3>
+      <p class="explica">Mude as regras e veja como ficariam as 513 cadeiras. O simulador usa o modelo do
+        Ato 04: recalcula a chance de cada candidato a deputado federal de 2026 com as regras que você escolher
+        e distribui as vagas de cada estado conforme essas chances.</p>
+      <div class="botoes" id="sim-atalhos"></div>
+      <div class="sim-grid">
+        <div class="sim-controles">
+          <label class="sim-controle"><span>Vantagem de ser homem <output id="o-genero">100%</output></span>
+            <input type="range" id="s-genero" min="0" max="150" step="10" value="100"></label>
+          <label class="sim-controle"><span>Desvantagem de ser negro(a) <output id="o-raca">100%</output></span>
+            <input type="range" id="s-raca" min="0" max="150" step="10" value="100"></label>
+          <label class="sim-controle"><span>Peso do patrimônio <output id="o-patrimonio">100%</output></span>
+            <input type="range" id="s-patrimonio" min="0" max="150" step="10" value="100"></label>
+          <label class="sim-controle"><span>Vantagem de quem já tem mandato <output id="o-mandato">100%</output></span>
+            <input type="range" id="s-mandato" min="0" max="150" step="10" value="100"></label>
+          <p class="sim-legenda-controles">100% = como foi em 2026 · 0% = não pesa nada</p>
+          <div class="sim-reserva"><span>Cadeiras reservadas para mulheres</span>
+            <div class="botoes" id="r-mulheres"><button data-v="0" class="ativo">Nenhuma</button><button data-v="0.3">30%</button><button data-v="0.5">50%</button></div></div>
+          <div class="sim-reserva"><span>Cadeiras reservadas para pessoas negras</span>
+            <div class="botoes" id="r-negras"><button data-v="0" class="ativo">Nenhuma</button><button data-v="0.3">30%</button><button data-v="0.5">50%</button></div></div>
+        </div>
+        <div class="sim-resultado">
+          <svg id="sim-hemiciclo" viewBox="0 0 600 330" role="img" aria-label="Câmara simulada"></svg>
+          <div class="legenda" id="sim-legenda"></div>
+          <div class="sim-numeros" id="sim-numeros"></div>
+        </div>
+      </div>
+      <p class="nota" id="sim-nota">É uma simulação com o modelo estatístico, não uma previsão: o modelo não
+        sabe de campanha, partido nem votos, e com tudo em 100% ele reproduz a Câmara real só aproximadamente.</p>
+    </div>
+
     <div class="bloco-extra">
       <h3>O filtro está diminuindo?</h3>
       <p class="explica">Percentual de mulheres e de pessoas negras entre os deputados federais eleitos nas
@@ -362,7 +404,7 @@
       de raça) iguais a zero.</p>
     <p id="metodo-extra"></p>
     <p>Fotos dos candidatos: Tribunal Superior Eleitoral (DivulgaCandContas / Portal de Dados Abertos),
-           usadas apenas para identificação, sem fins comerciais.</p>
+      usadas apenas para identificação, sem fins comerciais.</p>
     <p>Votação inexpressiva não prova fraude: é um dos indícios listados pelo TSE na Súmula 73,
       ao lado de prestação de contas padronizada e ausência de campanha.</p>
     <p class="assinatura">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais ·
@@ -371,7 +413,7 @@
 
   <div id="dica-apresentacao" class="dica-apresentacao" hidden>Modo apresentação: → próximo · ← anterior</div>
 
-  <script src="dados.js?v=7"></script>
-  <script src="grafico.js?v=7"></script>
+  <script src="dados.js?v=8"></script>
+  <script src="grafico.js?v=8"></script>
 </body>
 </html>

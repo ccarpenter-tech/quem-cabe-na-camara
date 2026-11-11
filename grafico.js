@@ -1391,3 +1391,148 @@ window.addEventListener('load', () => setTimeout(() => {
   s.onload = colocarFotos;                        // quando chegar, troca as iniciais pelas fotos
   document.body.appendChild(s);                   // se não existir fotos.js, ficam as iniciais
 }, 800));
+
+// =====================================================================
+// 20. ATO 05 – "MONTE A SUA CÂMARA" (simulador de regras com o modelo)
+// =====================================================================
+(function simulador() {
+  const svg = document.getElementById('sim-hemiciclo');
+  if (!svg || !TODOS.length) return;
+  const deps = TODOS.filter(c => c.cargo === 'Deputado Federal');
+  const porUF = {};
+  deps.forEach(c => { c.logpat = Math.log10((c.patrimonio || 0) + 1); (porUF[c.uf] = porUF[c.uf] || []).push(c); });
+  const vagas = {};
+  for (const uf in porUF) vagas[uf] = porUF[uf].filter(c => c.eleito).length;
+  const b = k => M[k] || 0;
+  const regra = { genero: 1, raca: 1, patrimonio: 1, mandato: 1, resM: 0, resN: 0 };
+
+  // as mesmas posições das 513 cadeiras do hemiciclo de cima
+  const assentos = cadeiras.map(c => svgEl('circle', { cx: c.x.toFixed(1), cy: c.y.toFixed(1), r: raioCadeira.toFixed(1) }, svg));
+  const GRUPOS4 = [['mn', 'Mulheres negras', '#5a1a99'], ['mo', 'Outras mulheres', '#b78cf0'],
+                   ['hn', 'Homens negros', '#77717d'], ['ho', 'Outros homens', '#cbc4b6']];
+  const grupo4 = c => (c.mulher ? 'm' : 'h') + (c.raca === 'N' ? 'n' : 'o');
+
+  // distribui k vagas proporcionalmente às chances, sem ninguém passar de 1 vaga
+  function distribuir(peso, k) {
+    let e = peso.slice();
+    for (let volta = 0; volta < 20; volta++) {
+      const livres = e.map((_, i) => i).filter(i => e[i] < 1);
+      const cheias = e.length - livres.length;
+      const soma = livres.reduce((s, i) => s + peso[i], 0);
+      if (!soma) break;
+      livres.forEach(i => e[i] = (k - cheias) * peso[i] / soma);
+      if (!e.some(x => x > 1)) break;
+      e = e.map(x => Math.min(x, 1));
+    }
+    return e.map(x => Math.min(x, 1));
+  }
+  // garante que um grupo tenha pelo menos "alvo" vagas (reserva de cadeiras)
+  function reservar(e, lista, teste, alvo, k) {
+    const noGrupo = e.reduce((s, x, i) => s + (teste(lista[i]) ? x : 0), 0);
+    if (noGrupo >= alvo || noGrupo === 0) return e;
+    return e.map((x, i) => teste(lista[i]) ? x * alvo / noGrupo : x * (k - alvo) / (k - noGrupo));
+  }
+
+  function simular() {
+    const soma = { mn: 0, mo: 0, hn: 0, ho: 0 };
+    let comMandato = 0, faltou = false;
+    for (const uf in porUF) {
+      const lista = porUF[uf], k = vagas[uf];
+      if (!k) continue;
+      const chance = lista.map(c => logistica(b('Intercept') + b('C(cargo)[T.Deputado Federal]')
+        + regra.genero * (c.mulher ? 0 : b('C(genero)[T.Masculino]'))
+        + regra.raca * (c.raca === 'B' ? 0 : b('C(raca)[T.' + (c.raca === 'N' ? 'Negra' : 'Outras') + ']'))
+        + (c.superior ? b('C(superior)[T.Sim]') : 0)
+        + regra.mandato * (c.mandato ? b('C(tem_mandato)[T.Sim]') : 0)
+        + regra.patrimonio * b('log_patrimonio') * c.logpat));
+      let e = distribuir(chance, k);
+      for (let volta = 0; volta < 15; volta++) {
+        if (regra.resM) e = reservar(e, lista, c => c.mulher, regra.resM * k, k);
+        if (regra.resN) e = reservar(e, lista, c => c.raca === 'N', regra.resN * k, k);
+        e = distribuir(e, k);
+      }
+      const mulheres = e.reduce((s, x, i) => s + (lista[i].mulher ? x : 0), 0);
+      if (regra.resM && mulheres < regra.resM * k - 0.5) faltou = true;
+      lista.forEach((c, i) => { soma[grupo4(c)] += e[i]; if (c.mandato) comMandato += e[i]; });
+    }
+    const total = Object.values(soma).reduce((a, x) => a + x, 0);
+    const grupos = emCadeiras(Object.fromEntries(GRUPOS4.map(([g]) => [g, 100 * soma[g] / total])));
+    let i = 0;
+    grupos.forEach(([g, n]) => { const cor = GRUPOS4.find(x => x[0] === g)[2]; for (let j = 0; j < n; j++) assentos[i++].setAttribute('fill', cor); });
+    const n = Object.fromEntries(grupos);
+    document.getElementById('sim-legenda').innerHTML = GRUPOS4.map(([g, nome, cor]) => `<span style="--cor:${cor}">${nome}: ${n[g]}</span>`).join('');
+
+    // comparação com a Câmara real
+    const reais = deps.filter(c => c.eleito), em513 = n => Math.round(513 * n / reais.length);
+    const real = { mulheres: em513(reais.filter(c => c.mulher).length), negras: em513(reais.filter(c => c.raca === 'N').length),
+                   mandato: em513(reais.filter(c => c.mandato).length) };
+    const sim = { mulheres: n.mn + n.mo, negras: n.mn + n.hn, mandato: Math.round(513 * comMandato / total) };
+    const caixa = (titulo, s, r) => {
+      const d = s - r, classe = d > 0 ? 'sobe' : d < 0 ? 'desce' : '';
+      return `<div><span>${titulo}</span><b>${s}</b><small class="${classe}">${d > 0 ? '+' : ''}${d} em relação à real (${r})</small></div>`;
+    };
+    document.getElementById('sim-numeros').innerHTML = caixa('Mulheres', sim.mulheres, real.mulheres) +
+      caixa('Pessoas negras', sim.negras, real.negras) + caixa('Já tinham mandato', sim.mandato, real.mandato);
+    document.getElementById('sim-nota').textContent = (faltou ? 'Atenção: em alguns estados não há candidatas suficientes para cumprir a reserva escolhida. ' : '') +
+      'É uma simulação com o modelo estatístico, não uma previsão: o modelo não sabe de campanha, partido nem votos, ' +
+      'e com tudo em 100% ele reproduz a Câmara real só aproximadamente.';
+  }
+
+  // controles deslizantes
+  ['genero', 'raca', 'patrimonio', 'mandato'].forEach(nome => {
+    const s = document.getElementById('s-' + nome);
+    s.addEventListener('input', () => { regra[nome] = s.value / 100; escreve('o-' + nome, s.value + '%'); simular(); });
+  });
+  // botões de reserva de cadeiras
+  [['r-mulheres', 'resM'], ['r-negras', 'resN']].forEach(([id, chave]) => {
+    document.querySelectorAll('#' + id + ' button').forEach(bt => bt.addEventListener('click', () => {
+      document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.toggle('ativo', x === bt));
+      regra[chave] = Number(bt.dataset.v); simular();
+    }));
+  });
+  // atalhos com cenários prontos
+  const ATALHOS = [
+    ['Como foi em 2026', { genero: 100, raca: 100, patrimonio: 100, mandato: 100, resM: 0, resN: 0 }],
+    ['Sem desvantagem de gênero e raça', { genero: 0, raca: 0, patrimonio: 100, mandato: 100, resM: 0, resN: 0 }],
+    ['Dinheiro não conta', { genero: 100, raca: 100, patrimonio: 0, mandato: 100, resM: 0, resN: 0 }],
+    ['30% das cadeiras para mulheres', { genero: 100, raca: 100, patrimonio: 100, mandato: 100, resM: 0.3, resN: 0 }],
+    ['Paridade', { genero: 100, raca: 100, patrimonio: 100, mandato: 100, resM: 0.5, resN: 0.5 }]
+  ];
+  const caixaAtalhos = document.getElementById('sim-atalhos');
+  caixaAtalhos.innerHTML = ATALHOS.map(([nome], k) => `<button data-k="${k}" class="${k === 0 ? 'ativo' : ''}">${nome}</button>`).join('');
+  caixaAtalhos.querySelectorAll('button').forEach(bt => bt.addEventListener('click', () => {
+    caixaAtalhos.querySelectorAll('button').forEach(x => x.classList.toggle('ativo', x === bt));
+    const v = ATALHOS[Number(bt.dataset.k)][1];
+    ['genero', 'raca', 'patrimonio', 'mandato'].forEach(nome => {
+      document.getElementById('s-' + nome).value = v[nome]; escreve('o-' + nome, v[nome] + '%'); regra[nome] = v[nome] / 100;
+    });
+    [['r-mulheres', 'resM'], ['r-negras', 'resN']].forEach(([id, chave]) => {
+      regra[chave] = v[chave];
+      document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.toggle('ativo', Number(x.dataset.v) === v[chave]));
+    });
+    simular();
+  }));
+  simular();
+})();
+
+// =====================================================================
+// 21. APP NO CELULAR (PWA): funciona offline e pode ser instalado
+// =====================================================================
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js');
+}
+(function botaoInstalar() {
+  const botao = document.getElementById('instalar');
+  if (!botao) return;
+  let pedido = null;
+  window.addEventListener('beforeinstallprompt', e => {        // Android e Chrome no computador
+    e.preventDefault(); pedido = e; botao.hidden = false;
+  });
+  botao.addEventListener('click', async () => {
+    if (!pedido) return;
+    pedido.prompt(); await pedido.userChoice; pedido = null; botao.hidden = true;
+  });
+  const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const instalado = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (iphone && !instalado) document.getElementById('dica-ios').hidden = false;   // no iPhone, só pelo Safari
+})();
