@@ -1334,3 +1334,60 @@ finalistas.forEach(f => {
     tempoDica = setTimeout(() => dica.hidden = true, 2500);
   });
 })();
+
+// =====================================================================
+// 19. FOTOS DOS CANDIDATOS (miniaturas do TSE, carregadas depois da página)
+// =====================================================================
+const chaveFoto = c => `${c.nome}|${c.uf || 'BR'}|${c.cargo || 'Presidente'}`;
+const iniciais = n => n.split(' ').filter(p => p.length > 2 || n.split(' ').length === 1).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+function htmlFoto(c, classe) {
+  const src = window.FOTOS && window.FOTOS[chaveFoto(c)];
+  return src ? `<img class="foto ${classe}" src="${src}" alt="Foto de ${c.nome}">`
+             : `<span class="foto sem-foto ${classe}" aria-hidden="true">${iniciais(c.nome)}</span>`;
+}
+// coloca (ou troca) a foto no começo de um elemento
+function porFoto(el, c, classe) {
+  if (!el || !c) return;
+  const antiga = el.querySelector(':scope > .foto');
+  if (antiga) antiga.remove();
+  el.insertAdjacentHTML('afterbegin', htmlFoto(c, classe));
+}
+
+// santinho da busca
+const santinhoOriginal = mostrarSantinho;
+mostrarSantinho = function (c) {
+  santinhoOriginal(c);
+  porFoto(document.querySelector('#santinho .santinho-corpo'), c, 'foto-santinho');
+};
+// rankings do placar
+const placarOriginal = desenharPlacar;
+desenharPlacar = function () {
+  placarOriginal();
+  document.querySelectorAll('#placar-ranking .nome').forEach(b => porFoto(b.parentElement, TODOS[Number(b.dataset.i)], 'foto-mini'));
+};
+// "quem se parece com você"
+const parecidosOriginal = mostrarParecidos;
+mostrarParecidos = function (r) {
+  const lista = parecidosOriginal(r);
+  document.querySelectorAll('#res-parecidos .cartao').forEach((el, k) => porFoto(el, lista[k], 'foto-cartao'));
+  return lista;
+};
+
+// coloca as fotos em tudo o que já está na tela
+function colocarFotos() {
+  document.querySelectorAll('#pres-cartoes .cartao').forEach((el, k) => porFoto(el, P[k], 'foto-cartao'));
+  document.querySelectorAll('#duelo .duelo-nomes > div').forEach((el, k) => porFoto(el, finalistas[k], 'foto-duelo'));
+  if (TODOS.length) desenharPlacar();
+  const corpo = document.querySelector('#santinho .santinho-corpo h3');
+  if (corpo) { const c = TODOS.find(x => x.nome === corpo.textContent); if (c) mostrarSantinho(c); }
+  if (ultimo && !document.getElementById('resultado').hidden) mostrarParecidos(ultimo.r);
+}
+colocarFotos();                                   // primeiro com as iniciais
+
+// o arquivo de fotos é grande: só carrega depois que a página abriu
+window.addEventListener('load', () => setTimeout(() => {
+  const s = document.createElement('script');
+  s.src = 'fotos.js?v=7';
+  s.onload = colocarFotos;                        // quando chegar, troca as iniciais pelas fotos
+  document.body.appendChild(s);                   // se não existir fotos.js, ficam as iniciais
+}, 800));

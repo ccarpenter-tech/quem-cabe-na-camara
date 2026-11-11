@@ -405,3 +405,20 @@ footer p { color: var(--suave); }
 @media (max-width: 800px) { .validacao-grid { grid-template-columns: 1fr; } }
 #gastos-painel { grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 800px) { #gastos-painel { grid-template-columns: repeat(2, 1fr); } }
+
+/* ===================== VERSÃO 6: fotos dos candidatos ===================== */
+.foto { display: block; object-fit: cover; background: #e9e2d6; color: #6d6873; font: 700 14px var(--ui);
+  display: grid; place-items: center; flex-shrink: 0; }
+img.foto { display: block; }
+.foto-santinho { width: 92px; height: 116px; border-radius: 6px; float: left; margin: 4px 16px 8px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 28px; }
+.santinho .numeros { clear: both; }
+.foto-cartao { width: 64px; height: 80px; border-radius: 8px; float: left; margin: 2px 14px 6px 0; font-size: 20px; }
+.cartao ul { clear: both; }
+.cartao .votos { clear: both; }
+.escuro .sem-foto { background: #2e2b38; color: #a9a3b0; }
+.foto-mini { width: 34px; height: 42px; border-radius: 5px; float: left; margin: 2px 12px 0 0; font-size: 12px; }
+.ranking li > div { overflow: hidden; }
+.foto-duelo { width: 72px; height: 90px; border-radius: 8px; margin-bottom: 8px; font-size: 22px; }
+.duelo-nomes div:last-child .foto-duelo { margin-left: auto; }
+.santinho .carimbo { top: 150px; right: 14px; }
