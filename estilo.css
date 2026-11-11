@@ -1,0 +1,407 @@
+/* ===== Cores e fontes (mude aqui para mudar a página toda) ===== */
+:root {
+  --papel: #f5f0e6;      /* fundo claro, cor de papel */
+  --tinta: #16141d;      /* fundo escuro e texto */
+  --texto: #16141d;
+  --suave: #6d6873;
+  --eleito: #e2620f;     /* laranja: eleito (o mesmo da Parte 1) */
+  --destaque: #7b2cbf;   /* roxo: o grupo em destaque */
+  --base: #cbc4b6;       /* cinza: o resto */
+  --linha: #ddd5c6;
+  --fundo: var(--papel);
+  --titulo: "Fraunces", Georgia, serif;
+  --ui: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --corpo: "Source Serif 4", Georgia, serif;
+}
+/* seções escuras: as mesmas variáveis com outros valores */
+.escuro {
+  --fundo: var(--tinta);
+  --texto: #f3eee4;
+  --suave: #a9a3b0;
+  --destaque: #a66cff;
+  --base: #4a4655;
+  --linha: #2e2b38;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--texto);
+  font-family: var(--corpo);
+  font-size: 19px;
+  line-height: 1.6;
+}
+h1, h2, h3 { font-family: var(--titulo); font-weight: 900; letter-spacing: -0.01em; }
+button, legend, label, .legenda, .chapeu, .numero-ato, .nota, .rotulo-botoes,
+.rotulo-resultado, .painel, .dica, summary { font-family: var(--ui); }
+
+/* ===== Barra de progresso e menu ===== */
+#progresso { position: fixed; top: 0; left: 0; height: 4px; width: 0; background: var(--eleito); z-index: 50; }
+#menu { position: fixed; right: 18px; top: 50%; transform: translateY(-50%); z-index: 40;
+  display: flex; flex-direction: column; gap: 10px; }
+#menu a { position: relative; width: 30px; height: 30px; border-radius: 50%; display: grid;
+  place-items: center; font: 600 12px var(--ui); text-decoration: none; color: var(--suave);
+  border: 1px solid currentColor; background: var(--papel); transition: all .3s; }
+#menu a.ativo { background: var(--eleito); border-color: var(--eleito); color: white; }
+#menu a::after { content: attr(data-nome); position: absolute; right: 40px; white-space: nowrap;
+  background: var(--tinta); color: white; padding: 3px 8px; border-radius: 4px;
+  opacity: 0; pointer-events: none; transition: opacity .2s; }
+#menu a:hover::after { opacity: 1; }
+
+/* ===== Capa ===== */
+.capa { position: relative; min-height: 100vh; overflow: hidden; display: flex; align-items: center; }
+#chuva { position: absolute; inset: 0; width: 100%; height: 100%; }
+.capa-texto { position: relative; max-width: 860px; margin: 0 auto; padding: 0 24px; }
+.chapeu { text-transform: uppercase; letter-spacing: .16em; font-size: 13px; font-weight: 600; color: var(--eleito); }
+h1 { font-size: clamp(52px, 10vw, 128px); line-height: .95; margin: .15em 0 .3em; }
+h1 em { font-style: italic; color: var(--eleito); }
+.linha-fina { font-size: clamp(19px, 2.4vw, 25px); max-width: 680px; }
+.laranja { color: var(--eleito); }
+.rolar { font-family: var(--ui); font-size: 14px; color: var(--suave); margin-top: 3em; }
+.rolar span { display: inline-block; animation: pula 1.6s infinite; }
+@keyframes pula { 50% { transform: translateY(6px); } }
+
+/* ===== Atos ===== */
+.ato { max-width: 1000px; margin: 0 auto; padding: 110px 24px; }
+.ato.escuro { max-width: none; padding-left: max(24px, calc((100% - 1000px) / 2));
+  padding-right: max(24px, calc((100% - 1000px) / 2)); }
+.ato.largo { max-width: 1440px; }
+.cabeca-ato { display: flex; gap: 22px; align-items: flex-start; margin-bottom: 18px; }
+.num-ato { font: 900 clamp(64px, 9vw, 110px)/0.85 var(--titulo); color: transparent;
+  -webkit-text-stroke: 2px var(--eleito); }
+.numero-ato { text-transform: uppercase; letter-spacing: .14em; font-size: 13px; font-weight: 600;
+  color: var(--suave); margin: 0; }
+h2 { font-size: clamp(30px, 4.4vw, 50px); line-height: 1.05; margin: .15em 0 0; max-width: 820px; }
+h3 { font-size: 24px; margin: 1.4em 0 .2em; }
+.explica { color: var(--suave); max-width: 660px; }
+.nota { font-size: 14px; color: var(--suave); max-width: 680px; }
+.destaque { background: var(--destaque); color: white; padding: 0 .3em; border-radius: 3px; }
+.numero-grande { font: 900 clamp(40px, 6vw, 64px)/1 var(--titulo); margin: .1em 0; }
+.destaque-txt { color: var(--destaque); }
+.cinza-txt { color: var(--suave); }
+
+/* ===== Legendas e botões ===== */
+.legenda { display: flex; flex-wrap: wrap; gap: 18px; font-size: 14px; margin-top: 10px; }
+.legenda span::before { content: ""; display: inline-block; width: 12px; height: 12px;
+  border-radius: 50%; margin-right: 6px; vertical-align: -1px; background: var(--cor); }
+.botoes { margin: 12px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rotulo-botoes { font-size: 13px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--suave); width: 80px; }
+button { font-size: 15px; padding: 9px 16px; border: 1.5px solid var(--texto); color: var(--texto);
+  background: transparent; border-radius: 999px; cursor: pointer; transition: all .2s; }
+button:hover { transform: translateY(-1px); }
+button.ativo { background: var(--texto); color: var(--fundo); }
+
+/* ===== Ato 1: rolagem com gráfico fixo ===== */
+.rolagem { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+.grafico-fixo { position: sticky; top: 6vh; height: 88vh; display: flex; flex-direction: column;
+  justify-content: center; }
+#funil { width: 100%; height: auto; max-height: 84vh; object-fit: contain; }
+.passos { padding: 30vh 0 40vh; }
+.passo { min-height: 75vh; display: flex; flex-direction: column; justify-content: center;
+  opacity: .2; transition: opacity .5s; }
+.passo.ativo { opacity: 1; }
+.passo p { background: var(--papel); padding: 18px 20px; border-left: 4px solid var(--eleito);
+  font-size: 21px; box-shadow: 0 6px 24px rgba(0,0,0,.06); }
+
+/* elementos que surgem quando o gráfico aparece na tela */
+svg .aparece { opacity: 0; transition: opacity .5s; }
+svg.visivel .aparece { opacity: 1; }
+
+/* ===== Ato 2: candidaturas fantasmas ===== */
+.numeros-lado { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; max-width: 760px; }
+.numeros-lado p { margin: 0; }
+#laranjas { width: 100%; max-width: 860px; display: block; margin-top: 10px; }
+#laranjas text { font-family: var(--ui); font-size: 12px; fill: var(--suave); }
+#laranjas .zona { fill: none; stroke: var(--eleito); stroke-width: 2; stroke-dasharray: 6 5; }
+#laranjas .zona-txt { fill: var(--eleito); font-weight: 800; font-size: 13px; }
+#laranjas .p-mulher { fill: var(--destaque); }
+#laranjas .p-homem { fill: var(--base); }
+
+/* ===== Ato 3: mapa ===== */
+.mapa-area { display: grid; grid-template-columns: 1.3fr 1fr; gap: 30px; align-items: center; }
+#mapa { width: 100%; max-width: 520px; }
+#mapa rect { stroke: var(--papel); stroke-width: 3; cursor: pointer; transition: fill .6s; }
+#mapa rect.sel { stroke: var(--tinta); }
+#mapa text { font-family: var(--ui); pointer-events: none; text-anchor: middle; }
+.painel { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 8px 30px rgba(0,0,0,.08);
+  font-size: 15px; min-height: 220px; }
+.painel h3 { margin-top: 0; }
+.barra-par div { height: 14px; border-radius: 2px; margin: 4px 0 10px; }
+.legenda-gradiente { font: 13px var(--ui); color: var(--suave); display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.legenda-gradiente i { display: block; width: 220px; height: 12px; border-radius: 6px; }
+
+/* ===== Ato 4: pesos ===== */
+#pesos { width: 100%; max-width: 860px; display: block; }
+#pesos text { font-family: var(--ui); fill: var(--texto); font-size: 14px; }
+#pesos .eixo-x text { fill: var(--suave); font-size: 12px; }
+#pesos line.grade { stroke: var(--linha); }
+#pesos line.um { stroke: var(--suave); stroke-dasharray: 4 4; }
+#pesos line.ic { stroke: var(--eleito); stroke-width: 3; stroke-linecap: round; }
+#pesos circle { fill: var(--eleito); stroke: var(--fundo); stroke-width: 3; }
+
+/* ===== Ato 5: hemiciclo ===== */
+.hemi-area { position: relative; max-width: 760px; margin: 10px auto 0; }
+#hemiciclo { width: 100%; display: block; }
+#hemiciclo circle { transition: fill .7s; cursor: pointer; }
+.hemi-centro { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); margin: 0;
+  text-align: center; width: 30%; font-family: var(--ui); font-size: 13px; line-height: 1.3; color: var(--suave); }
+.hemi-centro .numero-grande { display: block; color: var(--texto); font-size: clamp(34px, 5vw, 54px); }
+.caixa-decomp { margin: 30px 0 10px; padding: 22px 26px; background: white; border-radius: 12px;
+  max-width: 760px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+.decomp-barra { display: flex; height: 26px; border-radius: 4px; overflow: hidden; margin: 12px 0 8px; }
+.decomp-barra div { display: grid; place-items: center; color: white; font: 600 12px var(--ui); }
+.dica { position: fixed; pointer-events: none; background: var(--tinta); color: white; padding: 6px 10px;
+  border-radius: 6px; font-size: 13px; z-index: 60; }
+
+/* ===== Ato 6: a urna ===== */
+.urna { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0; margin-top: 30px; border-radius: 18px;
+  background: #d9d2c3; padding: 22px; box-shadow: inset 0 -6px 0 rgba(0,0,0,.12), 0 18px 40px rgba(0,0,0,.15); }
+.urna-tela { background: #eef1e8; border: 10px solid #2a2833; border-radius: 6px; min-height: 380px;
+  padding: 22px 26px; font-family: var(--ui); color: #1b1b1b; display: flex; flex-direction: column; }
+.tela-topo { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: #555; margin: 0; }
+.tela-pergunta { font: 800 24px/1.2 var(--ui); margin: 6px 0 16px; }
+.opcao { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; border: 1.5px solid #c8cbbf;
+  border-radius: 6px; background: white; color: #1b1b1b; margin: 6px 0; padding: 9px 12px; font-size: 16px; }
+.opcao .n { font: 800 18px var(--ui); width: 28px; height: 28px; display: grid; place-items: center;
+  background: #2a2833; color: white; border-radius: 4px; }
+.opcao.marcada { border-color: var(--eleito); background: #fff1e6; }
+.tela-rodape { margin-top: auto; border-top: 1px solid #c8cbbf; padding-top: 10px; font-size: 13px; color: #555; }
+.tela-fim { font: 900 110px/1 var(--ui); text-align: center; margin: auto; letter-spacing: .05em; }
+.urna-teclado { background: #2a2833; border-radius: 10px; margin-left: 18px; padding: 18px; display: flex;
+  flex-direction: column; gap: 12px; }
+.urna-marca { color: #bdb7c5; font: 600 11px var(--ui); letter-spacing: .2em; text-align: center; margin: 0; }
+.teclas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tecla { border: none; border-radius: 6px; background: #121118; color: white; font: 800 20px var(--ui);
+  padding: 12px 0; box-shadow: 0 3px 0 #000; }
+.tecla:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+.tecla.zero { grid-column: 2; }
+.teclas-acao { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 6px; margin-top: auto; }
+.teclas-acao .tecla { font-size: 11px; padding: 14px 0; color: #111; }
+.tecla.branco { background: #f5f5f5; }
+.tecla.corrige { background: #f08a24; }
+.tecla.confirma { background: #39a845; }
+
+/* ===== Ato 6: a Presidência ===== */
+.resumo-pres { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; font-family: var(--ui); font-size: 14px; }
+.resumo-pres span { border: 1px solid var(--linha); border-radius: 999px; padding: 6px 14px; }
+.resumo-pres b { color: var(--eleito); }
+.cartoes-pres { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.cartao { background: #211e2a; border: 1.5px solid var(--linha); border-radius: 14px; padding: 18px 20px;
+  font-family: var(--ui); font-size: 14px; position: relative; }
+.cartao.venceu { border-color: var(--eleito); box-shadow: 0 0 0 3px rgba(226,98,15,.25); }
+.cartao .posicao { color: var(--suave); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.cartao .selo { position: absolute; top: 16px; right: 16px; background: var(--eleito); color: white;
+  font-size: 11px; font-weight: 800; letter-spacing: .1em; padding: 3px 8px; border-radius: 4px; }
+.cartao h3 { font-size: 22px; margin: 4px 0 10px; }
+.cartao .partido { color: var(--suave); font-weight: 400; font-size: 14px; }
+.cartao .votos { height: 10px; background: var(--base); border-radius: 5px; margin: 4px 0 2px; }
+.cartao .votos i { display: block; height: 100%; border-radius: 5px; background: var(--suave); }
+.cartao.venceu .votos i { background: var(--eleito); }
+.cartao ul { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cartao li { background: rgba(255,255,255,.07); border-radius: 4px; padding: 3px 8px; }
+
+/* ===== Resultado ===== */
+#resultado { margin-top: 40px; padding: 34px; background: white; border-radius: 16px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.1); animation: surge .6s ease-out; }
+@keyframes surge { from { opacity: 0; transform: translateY(30px); } }
+.rotulo-resultado { text-transform: uppercase; letter-spacing: .14em; font-weight: 800;
+  color: var(--eleito); margin: 0; }
+.legenda-grande { display: block; font: 600 20px/1.3 var(--ui); color: var(--suave); margin-top: 6px; }
+.res-ic { font: 14px var(--ui); color: var(--suave); margin: 0; }
+#regua { width: 100%; max-width: 700px; display: block; margin: 16px 0; }
+#regua text { font: 12px var(--ui); fill: var(--suave); }
+.eixo { display: grid; grid-template-columns: 170px 1fr; gap: 12px; margin: 16px 0;
+  font-family: var(--ui); font-size: 15px; align-items: center; }
+.eixo .barras div { height: 16px; border-radius: 2px; margin: 3px 0; font-size: 12px; white-space: nowrap; }
+.eixo .b-cand { background: var(--base); }
+.eixo .b-eleito { background: var(--eleito); }
+.eixo .barras span { margin-left: 6px; position: relative; left: 100%; }
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 10px; }
+.botao-principal { background: var(--eleito); border-color: var(--eleito); color: white; }
+
+/* ===== Tabelas "ver os números" ===== */
+details.tabela { margin-top: 18px; font-size: 14px; }
+details.tabela summary { cursor: pointer; color: var(--suave); font-size: 14px; }
+details.tabela table { border-collapse: collapse; margin-top: 10px; font-family: var(--ui); }
+details.tabela td, details.tabela th { padding: 4px 12px; border-bottom: 1px solid var(--linha); text-align: right; }
+details.tabela td:first-child, details.tabela th:first-child { text-align: left; }
+
+/* ===== Rodapé ===== */
+footer { padding: 80px max(24px, calc((100% - 760px) / 2)) 120px; font-size: 16px; }
+footer h2 { font-size: 32px; }
+footer p { color: var(--suave); }
+.assinatura { margin-top: 40px; color: var(--eleito) !important; font-family: var(--ui); font-size: 14px; }
+
+/* ===== Celular ===== */
+@media (max-width: 800px) {
+  body { font-size: 17px; }
+  #menu { display: none; }
+  .rolagem, .mapa-area, .numeros-lado { grid-template-columns: 1fr; }
+  .grafico-fixo { top: 0; height: 50vh; background: var(--papel); z-index: 1; }
+  .passos { padding: 5vh 0 30vh; position: relative; z-index: 2; }
+  .passo { min-height: 65vh; }
+  .passo p { font-size: 18px; }
+  .urna { grid-template-columns: 1fr; padding: 12px; }
+  .urna-teclado { margin: 12px 0 0; }
+  .teclas, .urna-marca { display: none; }   /* no celular, toca-se direto nas opções */
+  .urna-tela { min-height: 340px; padding: 16px; }
+  .eixo { grid-template-columns: 1fr; }
+  .hemi-centro { position: static; transform: none; width: auto; }
+  .cabeca-ato { gap: 12px; }
+}
+/* quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ===== Resultado: a favor / contra e "quem se parece com você" ===== */
+.favor-contra { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; font-family: var(--ui); font-size: 15px; }
+.favor-contra > div { border-radius: 10px; padding: 14px 18px; }
+.favor-contra .favor { background: #eef6ea; }
+.favor-contra .contra { background: #fbece6; }
+.favor-contra h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+.favor-contra ul { margin: 0; padding-left: 18px; }
+.parecidos .cartao { background: #f7f3ec; border-color: #e4ddd0; color: #16141d; }
+.parecidos .cartao li { background: rgba(0,0,0,.05); }
+.parecidos .cartao li.igual { background: #fde3cf; color: #8a3a06; font-weight: 600; }
+.parecidos .cartao .posicao { color: #6d6873; }
+.parecidos .cartao .selo { position: static; display: table; margin-bottom: 6px; }
+@media (max-width: 800px) { .favor-contra { grid-template-columns: 1fr; } }
+
+/* ===================== VERSÃO 4: placar, busca, 2º turno, letreiros ===================== */
+:root { --mono: "Space Mono", "Courier New", monospace; }
+
+/* ----- Letreiro de apuração (faixa que corre) ----- */
+.letreiro { background: #0d0c12; border-top: 2px solid var(--eleito); border-bottom: 2px solid var(--eleito);
+  overflow: hidden; white-space: nowrap; padding: 12px 0; }
+.letreiro-faixa { display: inline-block; font: 700 15px var(--mono); color: var(--eleito); letter-spacing: .08em;
+  text-transform: uppercase; animation: corre 60s linear infinite; text-shadow: 0 0 8px rgba(226,98,15,.6); }
+.letreiro-2 .letreiro-faixa { animation-direction: reverse; }
+@keyframes corre { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ----- 2º turno: o duelo ----- */
+.duelo { margin: 30px 0 10px; }
+.duelo:empty { display: none; }
+.duelo h3 { margin: 0 0 4px; }
+.duelo-nomes { display: flex; justify-content: space-between; font-family: var(--ui); margin-top: 14px; gap: 20px; }
+.duelo-nomes b { font: 900 clamp(20px, 3vw, 30px) var(--titulo); display: block; }
+.duelo-nomes div:last-child { text-align: right; }
+.duelo-barra { display: flex; height: 46px; border-radius: 8px; overflow: hidden; margin: 10px 0 6px;
+  background: var(--base); position: relative; }
+.duelo-barra div { display: flex; align-items: center; padding: 0 14px; font: 700 18px var(--mono);
+  color: white; transition: width 1.4s cubic-bezier(.2,.8,.2,1); width: 50%; }
+.duelo-barra .vence { background: var(--eleito); }
+.duelo-barra .perde { background: #4a4655; justify-content: flex-end; }
+.duelo-barra::after { content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px;
+  border-left: 2px dashed var(--texto); opacity: .6; }
+.duelo .nota { margin-top: 0; }
+
+/* ----- Placar: painel de apuração ----- */
+.seletor { font: 14px var(--ui); color: var(--suave); display: inline-flex; align-items: center; gap: 8px; }
+.seletor select { font: 15px var(--ui); padding: 7px 10px; border-radius: 8px; border: 1.5px solid var(--texto);
+  background: transparent; color: var(--texto); }
+.seletor select option { color: #16141d; }
+.painel-apuracao { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
+  margin: 26px 0; background: #2e2b38; border: 3px solid #2e2b38; border-radius: 12px; overflow: hidden; }
+.painel-apuracao div { background: #0d0c12; padding: 16px 14px; }
+.painel-apuracao span { display: block; font: 600 11px var(--ui); letter-spacing: .14em; text-transform: uppercase;
+  color: #a9a3b0; }
+.painel-apuracao b { display: block; font: 700 clamp(22px, 2.6vw, 32px)/1.2 var(--mono); white-space: nowrap; color: var(--eleito);
+  text-shadow: 0 0 10px rgba(226,98,15,.45); margin: 6px 0 4px; }
+.painel-apuracao small { display: block; font: 12px/1.4 var(--ui); color: #a9a3b0; }
+.abas button { font-size: 14px; padding: 7px 14px; }
+.ranking { list-style: none; padding: 0; margin: 18px 0; counter-reset: pos; }
+.ranking li { display: grid; grid-template-columns: 46px 1fr; gap: 12px; align-items: center; padding: 10px 0;
+  border-bottom: 1px solid var(--linha); font-family: var(--ui); }
+.ranking .pos { font: 700 22px var(--mono); color: var(--eleito); }
+.ranking .nome { font-weight: 800; font-size: 17px; cursor: pointer; background: none; border: none; padding: 0;
+  color: var(--texto); text-align: left; border-radius: 0; }
+.ranking .nome:hover { text-decoration: underline; transform: none; }
+.ranking .meta { color: var(--suave); font-size: 13px; }
+.ranking .barra { height: 8px; border-radius: 4px; background: var(--eleito); margin-top: 6px; }
+.ranking .valor { font: 700 14px var(--mono); }
+
+/* ----- Busca ----- */
+.busca-caixa { position: relative; display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0 30px; max-width: 760px; }
+#busca-campo { flex: 1; min-width: 220px; font: 20px var(--ui); padding: 14px 18px; border-radius: 12px;
+  border: 2px solid var(--texto); background: white; }
+#busca-campo:focus { outline: 3px solid var(--eleito); outline-offset: 2px; }
+.sugestoes { position: absolute; top: 100%; left: 0; right: 0; list-style: none; margin: 6px 0 0; padding: 6px;
+  background: white; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.15); z-index: 30; font-family: var(--ui); }
+.sugestoes:empty { display: none; }
+.sugestoes li { padding: 9px 12px; border-radius: 8px; cursor: pointer; }
+.sugestoes li:hover, .sugestoes li.ativo { background: #fff1e6; }
+.sugestoes small { color: var(--suave); margin-left: 6px; }
+.sugestoes .tag { font-size: 11px; font-weight: 800; color: white; background: var(--eleito); border-radius: 3px;
+  padding: 1px 5px; margin-left: 6px; }
+
+/* ----- Santinho ----- */
+.santinho-area { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 40px; align-items: start; }
+.santinho-area:empty { display: none; }
+.santinho { position: relative; background: white; border-radius: 6px; overflow: hidden; transform: rotate(-1.5deg);
+  box-shadow: 0 2px 0 #e4ddd0, 0 20px 40px rgba(0,0,0,.15); font-family: var(--ui); animation: chega .5s ease-out; }
+@keyframes chega { from { opacity: 0; transform: rotate(-6deg) translateY(30px); } }
+.santinho-topo { background: var(--cor-s, #77717d); color: white; padding: 12px 18px; font-size: 13px;
+  font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.santinho-corpo { padding: 18px 20px 22px; }
+.santinho h3 { font-size: 34px; line-height: 1; margin: 6px 0 4px; }
+.santinho .partido-uf { font: 700 15px var(--mono); color: var(--cor-s, #77717d); }
+.santinho .ocup { color: var(--suave); font-size: 14px; margin: 2px 0 14px; }
+.santinho .numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.santinho .numeros div { background: #f5f0e6; border-radius: 6px; padding: 8px 10px; }
+.santinho .numeros span { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); }
+.santinho .numeros b { font: 700 18px var(--mono); }
+.santinho ul { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.santinho li { background: #f5f0e6; border-radius: 4px; padding: 3px 8px; font-size: 13px; }
+.carimbo { position: absolute; top: 64px; right: 10px; transform: rotate(-14deg); border: 4px double var(--cor-c);
+  color: var(--cor-c); font: 700 20px var(--mono); padding: 4px 10px; letter-spacing: .08em; border-radius: 6px;
+  opacity: .85; mix-blend-mode: multiply; animation: carimba .35s .3s both cubic-bezier(.3,1.6,.6,1); }
+@keyframes carimba { from { opacity: 0; transform: rotate(-14deg) scale(2.2); } }
+.comparacao h3 { margin-top: 0; }
+.comparacao .linha-comp { margin: 14px 0; font-family: var(--ui); font-size: 15px; }
+.comparacao .linha-comp b { font-family: var(--mono); }
+
+@media (max-width: 800px) {
+  .santinho-area { grid-template-columns: 1fr; }
+  .painel-apuracao { grid-template-columns: repeat(2, 1fr); }
+  .duelo-nomes b { font-size: 18px; }
+}
+
+/* ----- Ato 5: explicação do cenário escolhido ----- */
+.cenario-explica { font-family: var(--ui); font-size: 15px; background: white; border-left: 4px solid var(--eleito);
+  padding: 12px 16px; border-radius: 0 8px 8px 0; max-width: 760px; margin: 6px 0 0; min-height: 3.2em; }
+
+/* ===================== VERSÃO 5: cota por partido, gastos, validação, série, apresentação ===================== */
+.bloco-extra { margin-top: 70px; padding-top: 40px; border-top: 1px solid var(--linha); }
+.bloco-extra h3 { font-size: clamp(24px, 3vw, 32px); margin-top: 0; }
+.bloco-extra svg { width: 100%; max-width: 860px; display: block; margin-top: 10px; }
+.bloco-extra svg text { font-family: var(--ui); font-size: 12px; fill: var(--suave); }
+.bloco-extra svg .rotulo-forte { fill: var(--texto); font-size: 13px; font-weight: 600; }
+.bloco-extra svg .guia { stroke: var(--suave); stroke-dasharray: 4 4; fill: none; }
+.bloco-extra svg .grade { stroke: var(--linha); }
+#cota-partidos circle { fill: var(--destaque); fill-opacity: .75; stroke: var(--fundo); stroke-width: 1.5; }
+#cota-partidos circle:hover { fill-opacity: 1; stroke: var(--eleito); stroke-width: 3; }
+#cota-partidos .sigla { fill: var(--texto); font-size: 11px; font-weight: 600; }
+#gastos line.liga { stroke: var(--suave); stroke-width: 2; }
+#gastos circle.sem { fill: var(--base); }
+#gastos circle.com { fill: var(--eleito); }
+#gastos .rotulo-forte { fill: var(--texto); }
+.validacao-grid { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 40px; align-items: center; }
+#roc .curva { fill: none; stroke: var(--eleito); stroke-width: 3; }
+#roc .area { fill: var(--eleito); opacity: .15; }
+#validacao-texto { font-family: var(--ui); font-size: 15px; }
+#validacao-texto .numero-grande { color: var(--eleito); }
+#serie .linha { fill: none; stroke-width: 3.5; }
+#serie .ponto { stroke: var(--papel); stroke-width: 2; }
+#serie .valor { font-weight: 800; font-size: 13px; }
+.dica-apresentacao { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--tinta);
+  color: white; font: 600 13px var(--ui); padding: 8px 16px; border-radius: 999px; z-index: 70;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+@media (max-width: 800px) { .validacao-grid { grid-template-columns: 1fr; } }
+#gastos-painel { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 800px) { #gastos-painel { grid-template-columns: repeat(2, 1fr); } }

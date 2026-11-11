@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quem cabe na Câmara?</title>
+  <!-- prévia do link no WhatsApp e nas redes (troque SEU-USUARIO pelo seu usuário do GitHub) -->
+  <meta name="description" content="Quem se candidatou e quem se elegeu em 2026: uma investigação em dados sobre o filtro das urnas.">
+  <meta property="og:title" content="Quem cabe na Câmara?">
+  <meta property="og:description" content="Quem se candidatou e quem se elegeu em 2026: uma investigação em dados. Faça o teste na urna.">
+  <meta property="og:image" content="https://ccarpenter-tech.github.io/quem-cabe-na-camara/previa.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;600;800&family=Space+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css?v=6">
+</head>
+<body>
+
+  <!-- barra de progresso e menu lateral -->
+  <div id="progresso"></div>
+  <nav id="menu" aria-label="Atos">
+    <a href="#ato1" data-nome="O funil">1</a>
+    <a href="#ato2" data-nome="Candidaturas fantasmas">2</a>
+    <a href="#ato3" data-nome="O mapa do filtro">3</a>
+    <a href="#ato4" data-nome="O que pesa mais">4</a>
+    <a href="#ato5" data-nome="A Câmara possível">5</a>
+    <a href="#ato6" data-nome="A Presidência">6</a>
+    <a href="#placar" data-nome="O placar dos eleitos">7</a>
+    <a href="#busca" data-nome="Procure um candidato">8</a>
+    <a href="#ato7" data-nome="Você caberia?">9</a>
+  </nav>
+
+  <!-- ===== CAPA ===== -->
+  <header class="capa escuro">
+    <canvas id="chuva" aria-hidden="true"></canvas>
+    <div class="capa-texto">
+      <p class="chapeu">Eleições 2026 · Uma investigação em dados</p>
+      <h1>Quem <em>cabe</em> na Câmara?</h1>
+      <p class="linha-fina">
+        <b class="conta" data-valor="total_candidatos">0</b> pessoas disputaram uma vaga de
+        presidente, governador, senador ou deputado. Só <b class="conta laranja" data-valor="total_eleitos">0</b>
+        chegaram lá. E quem chegou não se parece com o Brasil.
+      </p>
+      <p class="rolar">Role para descer <span>↓</span></p>
+    </div>
+  </header>
+
+  <!-- letreiro de apuração (o texto é preenchido pelo grafico.js) -->
+  <div class="letreiro" aria-hidden="true"><div class="letreiro-faixa"></div></div>
+
+  <!-- ===== ATO 1: O FUNIL ===== -->
+  <section id="ato1" class="ato largo">
+    <div class="cabeca-ato">
+      <span class="num-ato">01</span>
+      <div>
+        <p class="numero-ato">O funil</p>
+        <h2>A eleição funciona como uma peneira</h2>
+      </div>
+    </div>
+    <div class="rolagem">
+      <div class="grafico-fixo">
+        <canvas id="funil" role="img" aria-label="Pontos representando cada candidato e cada eleito"></canvas>
+        <div class="legenda" id="legenda-funil"></div>
+      </div>
+      <div class="passos">
+        <div class="passo" data-passo="0">
+          <p>Cada ponto é uma das <b id="p0-cand"></b> candidaturas de 2026, do presidente ao
+            deputado distrital.</p>
+        </div>
+        <div class="passo" data-passo="1">
+          <p>Só <b id="p1-eleitos"></b> se elegeram, ou <b id="p1-taxa"></b> do total:
+            em média, <b>1 em cada <span id="p1-um-em"></span></b>. Os eleitos saem do bloco
+            e vão para a direita.</p>
+        </div>
+        <div class="passo" data-passo="2">
+          <p><span class="destaque">Mulheres</span> eram <b id="p2-cand"></b> das candidaturas.
+            Entre os eleitos, são <b id="p2-el"></b>.</p>
+        </div>
+        <div class="passo" data-passo="3">
+          <p><span class="destaque">Pessoas negras</span> (pretas e pardas) eram <b id="p3-cand"></b>
+            dos candidatos. Entre os eleitos, são <b id="p3-el"></b>.</p>
+        </div>
+        <div class="passo" data-passo="4">
+          <p>As <span class="destaque">mulheres negras</span> são o grupo que mais perde espaço:
+            de <b id="p4-cand"></b> dos candidatos para <b id="p4-el"></b> dos eleitos.</p>
+        </div>
+        <div class="passo" data-passo="5">
+          <p>Já quem declarou <span class="destaque">patrimônio acima de R$ 1 milhão</span> era
+            <b id="p5-cand"></b> dos candidatos e é <b id="p5-el"></b> dos eleitos.</p>
+        </div>
+        <div class="passo" data-passo="6">
+          <p>E quem <span class="destaque">já tinha mandato político</span> era <b id="p6-cand"></b>
+            dos candidatos. Entre os eleitos, <b id="p6-el"></b>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ATO 2: CANDIDATURAS FANTASMAS ===== -->
+  <section id="ato2" class="ato escuro">
+    <div class="cabeca-ato">
+      <span class="num-ato">02</span>
+      <div>
+        <p class="numero-ato">Candidaturas fantasmas</p>
+        <h2>A cota coloca mulheres na urna, mas muitas quase não recebem votos</h2>
+      </div>
+    </div>
+    <p class="explica">A lei exige que cada partido tenha pelo menos 30% de candidaturas de cada
+      gênero para deputado. Olhando quantos votos cada candidatura recebeu, aparece um padrão.</p>
+
+    <div class="numeros-lado">
+      <div><p class="numero-grande destaque-txt" id="lar-mulheres"></p>
+        <p>das candidatas a deputada tiveram <b>menos de 100 votos</b></p></div>
+      <div><p class="numero-grande cinza-txt" id="lar-homens"></p>
+        <p>dos candidatos homens ficaram nessa faixa</p></div>
+    </div>
+
+    <svg id="laranjas" viewBox="0 0 760 320" role="img"
+         aria-label="Distribuição de candidatos por faixa de votos, mulheres e homens"></svg>
+    <div class="legenda">
+      <span style="--cor: var(--destaque)">Mulheres (cada ponto = 1% delas)</span>
+      <span style="--cor: var(--base)">Homens (cada ponto = 1% deles)</span>
+    </div>
+    <p class="nota" id="lar-nota"></p>
+    <details class="tabela"><summary>Ver os números</summary><div id="tab-laranjas"></div></details>
+
+    <div class="bloco-extra">
+      <h3>Partido por partido: a cota no papel e nas urnas</h3>
+      <p class="explica">Cada bolinha é um partido (tamanho = número de deputados eleitos). À direita da
+        linha tracejada, o partido cumpriu os 30% de candidatas. Abaixo da diagonal, elegeu menos mulheres
+        do que lançou. Passe o mouse para ver o partido.</p>
+      <svg id="cota-partidos" viewBox="0 0 760 440" role="img" aria-label="Percentual de candidatas e de eleitas por partido"></svg>
+      <p class="nota" id="cota-nota"></p>
+    </div>
+  </section>
+
+  <!-- ===== ATO 3: O MAPA DO FILTRO ===== -->
+  <section id="ato3" class="ato">
+    <div class="cabeca-ato">
+      <span class="num-ato">03</span>
+      <div>
+        <p class="numero-ato">O mapa do filtro</p>
+        <h2>O filtro aparece em quase todo o país, mas com força diferente</h2>
+      </div>
+    </div>
+    <p class="explica">Cada quadrado é um estado. A cor mostra quantos pontos percentuais o grupo
+      perde entre os candidatos e os eleitos para deputado (federal, estadual ou distrital).
+      Passe o mouse ou toque em um estado.</p>
+
+    <div class="botoes" id="botoes-mapa">
+      <button data-grupo="mulheres" class="ativo">Mulheres</button>
+      <button data-grupo="negras">Pessoas negras</button>
+    </div>
+    <div class="mapa-area">
+      <svg id="mapa" viewBox="0 0 470 620" role="img" aria-label="Mapa em quadrados dos estados"></svg>
+      <div id="painel-uf" class="painel"></div>
+    </div>
+    <div id="legenda-mapa" class="legenda-gradiente"></div>
+    <details class="tabela"><summary>Ver os números</summary><div id="tab-mapa"></div></details>
+  </section>
+
+  <!-- ===== ATO 4: O QUE PESA MAIS ===== -->
+  <section id="ato4" class="ato escuro">
+    <div class="cabeca-ato">
+      <span class="num-ato">04</span>
+      <div>
+        <p class="numero-ato">O que pesa mais</p>
+        <h2>Já ter mandato pesa mais do que qualquer outra característica</h2>
+      </div>
+    </div>
+    <p class="explica">Quantas vezes maior é a chance de se eleger, comparando candidatos ao
+      Legislativo que são iguais em todo o resto (regressão logística). O ponto é a estimativa;
+      a linha, o intervalo de confiança de 95%.</p>
+    <svg id="pesos" viewBox="0 0 760 330" role="img" aria-label="Razões de chances com intervalos de confiança"></svg>
+    <p class="nota">Leitura: "× 2" quer dizer que a chance é duas vezes maior. Se a linha cruza o
+      1, o efeito pode ser nulo. São associações observadas em 2026, não causas.</p>
+
+    <div class="bloco-extra" id="gastos-bloco" hidden>
+      <h3>E o dinheiro de campanha?</h3>
+      <p class="explica">O mesmo modelo, agora incluindo quanto cada candidatura gastou (prestação de contas
+        ao TSE). Cinza: sem o gasto no modelo. Laranja: com o gasto. Se o ponto anda em direção ao ×1, parte
+        daquele efeito era, na verdade, dinheiro de campanha.</p>
+      <svg id="gastos" viewBox="0 0 900 270" role="img" aria-label="Razões de chances com e sem gasto de campanha"></svg>
+      <div class="painel-apuracao" id="gastos-painel"></div>
+    </div>
+
+    <div class="bloco-extra">
+      <h3>Como sabemos que o modelo funciona?</h3>
+      <div class="validacao-grid">
+        <svg id="roc" viewBox="0 0 380 400" role="img" aria-label="Curva ROC do modelo"></svg>
+        <div id="validacao-texto"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ATO 5: A CÂMARA POSSÍVEL ===== -->
+  <section id="ato5" class="ato">
+    <div class="cabeca-ato">
+      <span class="num-ato">05</span>
+      <div>
+        <p class="numero-ato">A Câmara possível</p>
+        <h2>Se a Câmara refletisse o Brasil, ela seria outra</h2>
+      </div>
+    </div>
+    <p class="explica">As 513 cadeiras da Câmara dos Deputados em quatro versões. Clique em cada
+      uma, de ① a ④, e veja quantas cadeiras o grupo ganharia em cada cenário.</p>
+
+    <div class="botoes" id="botoes-dimensao">
+      <span class="rotulo-botoes">Mostrar</span>
+      <button data-dimensao="genero" class="ativo">Gênero</button>
+      <button data-dimensao="raca">Raça</button>
+    </div>
+    <div class="botoes" id="botoes-cenario">
+      <span class="rotulo-botoes">Câmara</span>
+      <button data-cenario="real" class="ativo">① A Câmara real</button>
+      <button data-cenario="candidatos">② Sorteada entre os candidatos</button>
+      <button data-cenario="sem_filtro" id="botao-sem-filtro">③ Se ser mulher não pesasse</button>
+      <button data-cenario="brasil">④ Um retrato do Brasil</button>
+    </div>
+    <p class="cenario-explica" id="cenario-explica"></p>
+
+    <div class="hemi-area">
+      <svg id="hemiciclo" viewBox="0 0 600 330" role="img" aria-label="Hemiciclo com 513 cadeiras"></svg>
+      <p class="hemi-centro"><span class="numero-grande" id="hemi-numero"></span>
+        <span id="hemi-texto"></span></p>
+    </div>
+    <div class="legenda" id="legenda-hemi"></div>
+    <div class="caixa-decomp" id="decomp"></div>
+    <details class="tabela"><summary>Ver os números</summary><div id="tab-hemi"></div></details>
+
+    <div class="bloco-extra">
+      <h3>O filtro está diminuindo?</h3>
+      <p class="explica">Percentual de mulheres e de pessoas negras entre os deputados federais eleitos nas
+        três últimas eleições. As linhas tracejadas mostram o peso de cada grupo na população.</p>
+      <svg id="serie" viewBox="0 0 760 330" role="img" aria-label="Mulheres e pessoas negras eleitas em 2018, 2022 e 2026"></svg>
+      <p class="nota">2018 e 2022: Agência Câmara de Notícias (77 e 91 deputadas; 123 e 134 deputados pretos e
+        pardos). 2026: dados do TSE desta análise. População: Censo 2022.</p>
+    </div>
+    <div id="dica" class="dica" hidden></div>
+  </section>
+
+  <!-- ===== ATO 6: A PRESIDÊNCIA ===== -->
+  <section id="ato6" class="ato escuro">
+    <div class="cabeca-ato">
+      <span class="num-ato">06</span>
+      <div>
+        <p class="numero-ato">A Presidência</p>
+        <h2>Quem disputou o cargo mais alto, e quem venceu</h2>
+      </div>
+    </div>
+    <p class="explica">Para presidente são poucas candidaturas, então percentuais e modelos
+      estatísticos não fazem sentido aqui. Em vez disso, veja o perfil de cada uma, ordenadas
+      pelos votos.</p>
+    <div class="duelo" id="duelo"></div>
+    <div class="resumo-pres" id="pres-resumo"></div>
+    <div class="cartoes-pres" id="pres-cartoes"></div>
+    <p class="nota">Votos como calculados na Parte 1. Patrimônio e cor/raça são autodeclarados ao TSE.</p>
+  </section>
+
+  <!-- ===== ATO 7: O PLACAR DOS ELEITOS ===== -->
+  <section id="placar" class="ato escuro">
+    <div class="cabeca-ato">
+      <span class="num-ato">07</span>
+      <div>
+        <p class="numero-ato">O placar dos eleitos</p>
+        <h2>Quem são, afinal, os eleitos de 2026</h2>
+      </div>
+    </div>
+    <p class="explica">Escolha um cargo e um estado: o painel e os rankings se atualizam.
+      Clique em um nome para ver o "santinho" da candidatura.</p>
+    <div class="botoes" id="placar-cargos"></div>
+    <label class="seletor">Estado <select id="placar-uf"></select></label>
+    <div class="painel-apuracao" id="placar-painel"></div>
+    <div class="botoes abas" id="placar-abas"></div>
+    <ol class="ranking" id="placar-ranking"></ol>
+    <p class="nota" id="placar-nota"></p>
+  </section>
+
+  <!-- ===== ATO 8: A BUSCA ===== -->
+  <section id="busca" class="ato">
+    <div class="cabeca-ato">
+      <span class="num-ato">08</span>
+      <div>
+        <p class="numero-ato">Procure um candidato</p>
+        <h2>Ache qualquer candidatura de 2026</h2>
+      </div>
+    </div>
+    <p class="explica" id="busca-explica">Digite o nome de urna. Estão aqui todas as candidaturas
+      que foram para a urna, eleitas ou não.</p>
+    <div class="busca-caixa">
+      <input id="busca-campo" type="search" placeholder="Digite um nome de urna…" autocomplete="off"
+             aria-label="Buscar candidato pelo nome de urna">
+      <button id="busca-sorte" type="button">Me surpreenda</button>
+      <ul id="busca-sugestoes" class="sugestoes" role="listbox"></ul>
+    </div>
+    <div id="santinho" class="santinho-area"></div>
+  </section>
+
+  <!-- letreiro de apuração -->
+  <div class="letreiro letreiro-2" aria-hidden="true"><div class="letreiro-faixa"></div></div>
+
+  <!-- ===== ATO 9: O TESTE (URNA) ===== -->
+  <section id="ato7" class="ato">
+    <div class="cabeca-ato">
+      <span class="num-ato">09</span>
+      <div>
+        <p class="numero-ato">E você?</p>
+        <h2>Você caberia na Câmara?</h2>
+      </div>
+    </div>
+    <p class="explica">Responda 7 perguntas na urna. Use o teclado da urna ou clique nas opções,
+      e aperte <b>CONFIRMA</b>.</p>
+
+    <div class="urna">
+      <div class="urna-tela" id="tela" aria-live="polite"></div>
+      <div class="urna-teclado">
+        <p class="urna-marca">URNA DE DADOS · 2026</p>
+        <div class="teclas" id="teclas"></div>
+        <div class="teclas-acao">
+          <button type="button" class="tecla branco" id="t-som" aria-label="Ligar ou desligar o som">SOM</button>
+          <button type="button" class="tecla corrige" id="t-corrige">CORRIGE</button>
+          <button type="button" class="tecla confirma" id="t-confirma">CONFIRMA</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultado" hidden>
+      <p class="rotulo-resultado" id="res-rotulo"></p>
+      <p class="numero-grande" id="res-chance"></p>
+      <p class="res-ic" id="res-ic"></p>
+      <svg id="regua" viewBox="0 0 700 90" role="img" aria-label="Sua chance comparada com a média do cargo"></svg>
+      <p id="res-frase"></p>
+      <div class="favor-contra" id="res-favor"></div>
+      <h3>Seu perfil, eixo por eixo</h3>
+      <p class="explica" id="res-explica"></p>
+      <div id="res-eixos"></div>
+      <h3>Quem se parece com você</h3>
+      <p class="explica" id="parecidos-explica"></p>
+      <div class="cartoes-pres parecidos" id="res-parecidos"></div>
+      <div class="acoes">
+        <button type="button" id="b-baixar" class="botao-principal">Baixar meu resultado</button>
+        <button type="button" id="b-link">Copiar link do resultado</button>
+        <button type="button" id="b-refazer">Refazer o teste</button>
+      </div>
+      <p class="nota" id="res-nota"></p>
+    </div>
+  </section>
+
+  <!-- ===== RODAPÉ ===== -->
+  <footer class="escuro">
+    <h2>Metodologia</h2>
+    <p>Dados: Portal de Dados Abertos do TSE (candidatos, bens declarados e votação de 2026) e
+      Censo 2022 do IBGE (51,5% de mulheres; 55,5% de pessoas pretas e pardas).</p>
+    <p>Recorte: candidatos que estiveram na urna para presidente, governador, senador e deputado
+      federal, estadual e distrital. Vices e suplentes não entram. Patrimônio e cor/raça são
+      autodeclarados. "Mandato" foi aproximado pela ocupação declarada.</p>
+    <p>Modelo: regressão logística com os candidatos ao Legislativo (deputados e senador), com
+      cargo, mandato, gênero, raça, ensino superior e log do patrimônio. O cenário "sem filtro"
+      recalcula a chance de cada candidato a deputado federal com os coeficientes de gênero (ou
+      de raça) iguais a zero.</p>
+    <p id="metodo-extra"></p>
+    <p>Votação inexpressiva não prova fraude: é um dos indícios listados pelo TSE na Súmula 73,
+      ao lado de prestação de contas padronizada e ausência de campanha.</p>
+    <p class="assinatura">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais ·
+      Carolina Carpenter · 2026</p>
+  </footer>
+
+  <div id="dica-apresentacao" class="dica-apresentacao" hidden>Modo apresentação: → próximo · ← anterior</div>
+
+  <script src="dados.js?v=6"></script>
+  <script src="grafico.js?v=6"></script>
+</body>
+</html>
