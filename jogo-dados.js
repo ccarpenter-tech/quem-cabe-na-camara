@@ -50,8 +50,35 @@ const J = (function () {
       superior: c.superior ? b('C(superior)[T.Sim]') : 0
     };
   }
-  const base = c => { const t = termos(c); return b('Intercept') + b('C(cargo)[T.Deputado Federal]') + t.mandato + t.patrimonio + t.genero + t.raca + t.superior; };
+  // efeito do cargo: os cargos do Legislativo têm coeficiente no modelo (Deputado Distrital é a referência);
+  // Governador e Presidente não entraram no modelo, então o nível é calibrado para a taxa real de eleição do cargo
+  const semCargo = c => { const t = termos(c); return b('Intercept') + t.mandato + t.patrimonio + t.genero + t.raca + t.superior; };
+  const OFF = {};
+  function offCargo(cargo) {
+    if (cargo in OFF) return OFF[cargo];
+    const k = 'C(cargo)[T.' + cargo + ']';
+    if (k in M || cargo === 'Deputado Distrital') return OFF[cargo] = b(k);
+    const l = TODOS.filter(c => c.cargo === cargo), alvo = l.filter(c => c.eleito).length / Math.max(1, l.length);
+    let lo = -15, hi = 15;
+    for (let it = 0; it < 60 && l.length; it++) { const m = (lo + hi) / 2, media = l.reduce((s, c) => s + logistica(semCargo(c) + m), 0) / l.length; if (media > alvo) hi = m; else lo = m; }
+    return OFF[cargo] = (lo + hi) / 2;
+  }
+  const calibrado = cargo => !(('C(cargo)[T.' + cargo + ']') in M) && cargo !== 'Deputado Distrital';
+  const base = c => semCargo(c) + offCargo(c.cargo || 'Deputado Federal');
   const chance = c => logistica(base(c));
+  // intervalo de confiança de 95% da chance, pela matriz de covariância do modelo (DADOS.cov)
+  function chanceIC(c) {
+    const COV = D.cov; if (!COV) return null;
+    const v = { 'Intercept': 1, 'log_patrimonio': lp(c) };
+    if (('C(cargo)[T.' + c.cargo + ']') in M) v['C(cargo)[T.' + c.cargo + ']'] = 1;
+    if (c.mandato) v['C(tem_mandato)[T.Sim]'] = 1;
+    if (!c.mulher) v['C(genero)[T.Masculino]'] = 1;
+    if (c.raca === 'N') v['C(raca)[T.Negra]'] = 1; else if (c.raca === 'O') v['C(raca)[T.Outras]'] = 1;
+    if (c.superior) v['C(superior)[T.Sim]'] = 1;
+    let va = 0; for (const a in v) for (const k in v) if (COV[a] && COV[a][k] != null) va += v[a] * v[k] * COV[a][k];
+    const x = base(c), ep = Math.sqrt(Math.max(0, va));
+    return [logistica(x - 1.96 * ep), logistica(x + 1.96 * ep)];
+  }
   const or = k => [Math.exp(b(k)), IC[k] ? Math.exp(IC[k][0]) : null, IC[k] ? Math.exp(IC[k][1]) : null];
 
   // ---------- estatísticas da Parte 1 ----------
@@ -139,7 +166,24 @@ const J = (function () {
     const B = S.ols.beta;
     S.efVotos = { mandato: 10 ** B[1], patrimonio10: 10 ** B[2], homem: 10 ** B[3], negro: 10 ** B[4], superior: 10 ** B[6] };
   }
-  const votosPrevistos = c => S.ols ? 10 ** xVotos(c).reduce((s, v, i) => s + v * S.ols.beta[i], 0) : null;
+  const votosPrevistos = c => { const o = cargoInfo(c.cargo || 'Deputado Federal').ols; return o ? 10 ** xVotos(c).reduce((s, v, i) => s + v * o.beta[i], 0) : null; };
+
+  // cada cargo: candidatos, vagas por estado e regressão dos votos (calculada quando o jogo precisa)
+  const CARGO = {};
+  function cargoInfo(cargo) {
+    if (CARGO[cargo]) return CARGO[cargo];
+    const l = TODOS.filter(c => c.cargo === cargo), uf = {};
+    l.forEach(c => { const k = c.uf || 'BR', u = uf[k] = uf[k] || { n: 0, vagas: 0, corte: Infinity, m: 0, me: 0 }; u.n++; if (c.mulher) u.m++;
+      if (c.eleito) { u.vagas++; if (c.mulher) u.me++; if (c.votos != null) u.corte = Math.min(u.corte, c.votos); } });
+    const cv = l.filter(c => c.votos != null);
+    const info = { cargo, lista: l, n: l.length, nEl: l.filter(c => c.eleito).length, uf,
+      mulheres: [prop(l, c => c.mulher), prop(l.filter(c => c.eleito), c => c.mulher)], negros: [prop(l, c => c.raca === 'N'), prop(l.filter(c => c.eleito), c => c.raca === 'N')] };
+    info.taxa = info.nEl / Math.max(1, info.n);
+    if (cv.length >= 40) { info.ols = mqo(cv.map(xVotos), cv.map(c => Math.log10(c.votos + 1))); const B = info.ols.beta;
+      info.efVotos = { mandato: 10 ** B[1], patrimonio10: 10 ** B[2], homem: 10 ** B[3], negro: 10 ** B[4] };
+      info.spearman = pearson(postos(cv.map(c => c.patrimonio || 0)), postos(cv.map(c => c.votos))); }
+    return CARGO[cargo] = info;
+  }
 
   // estados: vagas e candidatos a deputado federal
   const UF = {};
@@ -257,6 +301,6 @@ const J = (function () {
     return G.barras(itens, { max: Math.max(itens[0].v, itens[1].v) * 1.35, fmt: v => pct(v) + ' com menos de 100 votos' });
   };
 
-  return { D, M, IC, TODOS, DEP, S, UF, PART, taxaPartido, partidosOrd, termos, base, chance, or, votosPrevistos, lp,
+  return { D, M, IC, TODOS, DEP, S, UF, PART, taxaPartido, partidosOrd, termos, base, chance, chanceIC, calibrado, cargoInfo, or, votosPrevistos, lp,
     num, dec, pct, fmtP, reais, esc, logistica, logit, lim, mediana, chaveFoto, iniciais, fotoDe, retrato, corGrupo, G, T };
 })();

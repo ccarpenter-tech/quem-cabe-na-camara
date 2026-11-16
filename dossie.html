@@ -14,7 +14,7 @@
   <!-- prévia do link no WhatsApp e nas redes (troque SEU-USUARIO pelo seu usuário do GitHub) -->
   <meta name="description" content="Quem se candidatou e quem se elegeu em 2026: uma investigação em dados sobre o filtro das urnas.">
   <meta property="og:title" content="Quem cabe na Câmara?">
-  <meta property="og:description" content="Quem se candidatou e quem se elegeu em 2026: uma investigação em dados. Faça o teste na urna.">
+  <meta property="og:description" content="Quem se candidatou e quem se elegeu em 2026: uma investigação em dados. Jogue a campanha no jogo.">
   <meta property="og:image" content="https://SEU-USUARIO.github.io/quem-cabe-na-camara/previa.png">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
@@ -39,7 +39,6 @@
     <a href="#ato6" data-nome="A Presidência">6</a>
     <a href="#placar" data-nome="O placar dos eleitos">7</a>
     <a href="#busca" data-nome="Procure um candidato">8</a>
-    <a href="#ato7" data-nome="Você caberia?">9</a>
   </nav>
 
   <!-- ===== CAPA ===== -->
@@ -346,52 +345,6 @@
   <!-- letreiro de apuração -->
   <div class="letreiro letreiro-2" aria-hidden="true"><div class="letreiro-faixa"></div></div>
 
-  <!-- ===== ATO 9: O TESTE (URNA) ===== -->
-  <section id="ato7" class="ato">
-    <div class="cabeca-ato">
-      <span class="num-ato">09</span>
-      <div>
-        <p class="numero-ato">E você?</p>
-        <h2>Você caberia na Câmara?</h2>
-      </div>
-    </div>
-    <p class="explica">Responda 7 perguntas na urna. Use o teclado da urna ou clique nas opções,
-      e aperte <b>CONFIRMA</b>.</p>
-
-    <div class="urna">
-      <div class="urna-tela" id="tela" aria-live="polite"></div>
-      <div class="urna-teclado">
-        <p class="urna-marca">URNA DE DADOS · 2026</p>
-        <div class="teclas" id="teclas"></div>
-        <div class="teclas-acao">
-          <button type="button" class="tecla branco" id="t-som" aria-label="Ligar ou desligar o som">SOM</button>
-          <button type="button" class="tecla corrige" id="t-corrige">CORRIGE</button>
-          <button type="button" class="tecla confirma" id="t-confirma">CONFIRMA</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="resultado" hidden>
-      <p class="rotulo-resultado" id="res-rotulo"></p>
-      <p class="numero-grande" id="res-chance"></p>
-      <p class="res-ic" id="res-ic"></p>
-      <svg id="regua" viewBox="0 0 700 90" role="img" aria-label="Sua chance comparada com a média do cargo"></svg>
-      <p id="res-frase"></p>
-      <div class="favor-contra" id="res-favor"></div>
-      <h3>Seu perfil, eixo por eixo</h3>
-      <p class="explica" id="res-explica"></p>
-      <div id="res-eixos"></div>
-      <h3>Quem se parece com você</h3>
-      <p class="explica" id="parecidos-explica"></p>
-      <div class="cartoes-pres parecidos" id="res-parecidos"></div>
-      <div class="acoes">
-        <button type="button" id="b-baixar" class="botao-principal">Baixar meu resultado</button>
-        <button type="button" id="b-link">Copiar link do resultado</button>
-        <button type="button" id="b-refazer">Refazer o teste</button>
-      </div>
-      <p class="nota" id="res-nota"></p>
-    </div>
-  </section>
 
   <!-- ===== RODAPÉ ===== -->
   <footer class="escuro">
@@ -417,6 +370,6 @@
   <div id="dica-apresentacao" class="dica-apresentacao" hidden>Modo apresentação: → próximo · ← anterior</div>
 
   <script src="dados.js?v=8"></script>
-  <script src="grafico.js?v=8"></script>
+  <script src="grafico.js?v=9"></script>
 </body>
 </html>
