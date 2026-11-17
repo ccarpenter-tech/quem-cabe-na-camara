@@ -34,7 +34,27 @@ const J = (function () {
   const iniciais = n => n.split(' ').filter(p => p.length > 2 || n.split(' ').length === 1).map(p => p[0]).slice(0, 2).join('').toUpperCase();
   const fotoDe = c => { if (!c || c.ficticio) return null; const k = chaveFoto(c); return (window.FOTOS && window.FOTOS[k]) || (window.FOTOS_JOGO && window.FOTOS_JOGO[k]); };
   const corGrupo = c => c.mulher ? (c.raca === 'N' ? '#a66cff' : '#cfb3ff') : (c.raca === 'N' ? '#8f8a99' : '#d9d2c4');
+  // avatar desenhado (para quem cria o próprio candidato)
+  function avatarSVG(a) {
+    const p = a.pele, h = a.corCabelo, r = a.roupa, est = a.cabelo, ac = a.acessorio;
+    const tras = { longo: `<path d="M24 62 Q22 16 60 15 Q98 16 96 62 L102 122 L18 122 Z" fill="${h}"/>`, crespo: `<circle cx="60" cy="50" r="43" fill="${h}"/>`,
+      trancas: `<path d="M26 60 Q24 18 60 16 Q96 18 94 60 L98 126 L22 126 Z" fill="${h}"/>${[30, 40, 80, 90].map(x => `<path d="M${x} 70 v54" stroke="${h}" stroke-width="7" stroke-linecap="round"/>`).join('')}` }[est] || '';
+    const frente = { curto: `<path d="M33 58 Q32 27 60 26 Q88 27 87 58 Q82 41 60 40 Q40 40 33 58Z" fill="${h}"/>`, longo: `<path d="M32 62 Q30 26 60 25 Q90 26 88 62 Q84 40 60 39 Q38 40 32 62Z" fill="${h}"/>`,
+      coque: `<circle cx="60" cy="22" r="12" fill="${h}"/><path d="M33 56 Q33 28 60 27 Q87 28 87 56 Q80 40 60 40 Q40 40 33 56Z" fill="${h}"/>`, crespo: `<path d="M31 60 Q28 30 60 29 Q92 30 89 60 Q84 44 60 44 Q36 44 31 60Z" fill="${h}"/>`,
+      trancas: `<path d="M33 58 Q32 27 60 26 Q88 27 87 58 Q82 41 60 40 Q40 40 33 58Z" fill="${h}"/><path d="M60 27 V40 M48 29 V42 M72 29 V42" stroke="rgba(0,0,0,.25)" stroke-width="2"/>`, careca: '' }[est] || '';
+    const oculos = `<g fill="none" stroke="#1c1826" stroke-width="2.5"><circle cx="49" cy="64" r="8"/><circle cx="71" cy="64" r="8"/><path d="M57 64 h6"/></g>`;
+    const brincos = `<circle cx="33" cy="74" r="3.2" fill="#ffd36b"/><circle cx="87" cy="74" r="3.2" fill="#ffd36b"/>`;
+    return `<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Avatar"><rect width="120" height="150" fill="#d9cfe8"/><circle cx="60" cy="58" r="52" fill="#e9e1f2"/>${tras}
+      <path d="M12 150 Q14 106 60 102 Q106 106 108 150 Z" fill="${r}"/><path d="M48 104 L60 120 L72 104" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="3"/>
+      <rect x="50" y="82" width="20" height="24" rx="8" fill="${p}"/><circle cx="33" cy="65" r="6" fill="${p}"/><circle cx="87" cy="65" r="6" fill="${p}"/>
+      <ellipse cx="60" cy="62" rx="27" ry="31" fill="${p}"/>${frente}
+      <path d="M43 55 q6 -4 12 0 M65 55 q6 -4 12 0" stroke="#2b2233" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <circle cx="49" cy="64" r="3.2" fill="#2b2233"/><circle cx="71" cy="64" r="3.2" fill="#2b2233"/><path d="M60 66 q-3 6 0 8" stroke="rgba(0,0,0,.2)" stroke-width="2" fill="none"/>
+      <path d="M50 78 Q60 86 70 78" stroke="#7a2b2b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      ${ac === 'oculos' || ac === 'ambos' ? oculos : ''}${ac === 'brinco' || ac === 'ambos' ? brincos : ''}</svg>`;
+  }
   function retrato(c, classe = '') {
+    if (c && c.avatar) return `<span class="jg-foto jg-avatar ${classe}" style="--anel:${corGrupo(c)}">${avatarSVG(c.avatar)}</span>`;
     const src = fotoDe(c);
     return src ? `<img class="jg-foto ${classe}" src="${src}" alt="Foto de ${esc(c.nome)}" style="--anel:${corGrupo(c)}">`
       : `<span class="jg-foto jg-sem ${classe}" style="--anel:${corGrupo(c)}" aria-hidden="true">${c.ficticio ? 'EU' : esc(iniciais(c.nome))}</span>`;
@@ -302,5 +322,5 @@ const J = (function () {
   };
 
   return { D, M, IC, TODOS, DEP, S, UF, PART, taxaPartido, partidosOrd, termos, base, chance, chanceIC, calibrado, cargoInfo, or, votosPrevistos, lp,
-    num, dec, pct, fmtP, reais, esc, logistica, logit, lim, mediana, chaveFoto, iniciais, fotoDe, retrato, corGrupo, G, T };
+    num, dec, pct, fmtP, reais, esc, logistica, logit, lim, mediana, chaveFoto, iniciais, fotoDe, retrato, avatarSVG, corGrupo, G, T };
 })();

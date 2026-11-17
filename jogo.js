@@ -52,11 +52,13 @@
 
   // ---------- trilha de fases ----------
   const FASES = ['A peneira', 'Seu cargo', 'Seu estado', 'Sua candidatura', 'A campanha', 'A eleição', 'A Câmara', 'O que fica'];
+  let faseMax = -1;
   function fase(k) {
+    if (k > faseMax) { faseMax = k; if (k >= 0) UI.trilha(k, FASES, st && st.c ? (st.c.ficticio ? 'EU' : J.iniciais(st.c.nome)) : 'EU'); }
     topo.hidden = k < 0;
     topo.innerHTML = FASES.map((f, i) => `<li class="${i < k ? 'feito' : i === k ? 'agora' : ''}"><i></i><span>${f}</span></li>`).join('');
   }
-  const dado = (titulo, corpo, fonte) => `<aside class="dado"><p class="dado-chapeu">O dado por trás disso · Parte 1</p><h4>${titulo}</h4>${corpo}${fonte ? `<p class="dado-fonte">${fonte}</p>` : ''}</aside>`;
+  const dado = (titulo, corpo, fonte) => UI.carta(titulo, `<aside class="dado"><p class="dado-chapeu">O dado por trás disso · Parte 1</p><h4>${titulo}</h4>${corpo}${fonte ? `<p class="dado-fonte">${fonte}</p>` : ''}</aside>`);
   const mostrar = html => { tela.innerHTML = `<div class="tela-entra">${html}</div>`; };
 
   // =================================================================
@@ -117,19 +119,28 @@
   // 0. CAPA
   // =================================================================
   function capa() {
-    fase(-1); hud.hidden = true;
+    fase(-1); faseMax = -1; hud.hidden = true; UI.fecharModal();
+    const nA = UI.CARTAS.filter(c => UI.album[c.id]).length, nC = UI.CONQ.filter(c => UI.feitas[c[0]]).length;
     mostrar(`
-      <section class="capa-jogo"><canvas id="chuva" aria-hidden="true"></canvas>
-        <div class="capa-txt">
-          <p class="jg-chapeu">Eleições 2026 · um jogo com dados reais do TSE</p>
-          <h1>Quem cabe na Câmara?</h1>
-          <p class="capa-sub">Em 2026, <b>${num(S.n)}</b> pessoas pediram o seu voto. Só <b>${num(S.nEl)}</b> ganharam um cargo.
-            Escolha a disputa, registre a sua candidatura na urna (ou jogue com um candidato de verdade) e descubra se dá para vencer a peneira.</p>
-          <div class="capa-numeros"><div><b>${num(S.n)}</b><span>candidaturas</span></div><div><b>${num(S.nEl)}</b><span>eleitos</span></div><div><b>1 em ${Math.round(S.n / S.nEl)}</b><span>chegou lá</span></div></div>
-          <button type="button" class="jg-botao principal" id="b-jogar">Começar o jogo ▶</button>
-          <p class="capa-links"><a href="dossie.html">Prefere só os gráficos? Abra o dossiê completo →</a></p>
-        </div></section>`);
-    chuva(); $('b-jogar').onclick = peneira;
+      <section class="titulo-jogo"><canvas id="chuva" aria-hidden="true"></canvas>
+        <div class="tj-centro">
+          <p class="jg-chapeu">Eleições 2026 · dados reais do TSE</p>
+          <h1 class="logo"><span>Quem cabe</span><span>na Câmara?</span></h1>
+          <p class="tj-sub"><b>${num(S.n)}</b> candidaturas · <b>${num(S.nEl)}</b> cargos · 1 chance em ${Math.round(S.n / S.nEl)}</p>
+          <button type="button" class="tj-start" id="b-start">TOQUE PARA COMEÇAR</button>
+          <div class="tj-menu" id="tj-menu" hidden>
+            <button type="button" class="mb grande principal" id="b-jogar">▶ Jogar</button>
+            <button type="button" class="mb" id="b-album">Álbum de dados <em>${nA}/${UI.CARTAS.length}</em></button>
+            <button type="button" class="mb" id="b-conq">Conquistas <em>${nC}/${UI.CONQ.length}</em></button>
+            <button type="button" class="mb" id="b-como">Como funciona</button>
+            <a class="mb" href="dossie.html">Dossiê com todos os gráficos</a>
+          </div>
+        </div>
+        <p class="tj-rodape">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais</p></section>`);
+    chuva();
+    const abre = () => { $('b-start').hidden = true; $('tj-menu').hidden = false; somFim(); $('b-jogar').focus(); };
+    $('b-start').onclick = abre;
+    $('b-jogar').onclick = peneira; $('b-album').onclick = UI.telaAlbum; $('b-conq').onclick = UI.telaConquistas; $('b-como').onclick = UI.telaComo;
   }
   function chuva() {
     const cv = $('chuva'); if (!cv) return;
@@ -197,6 +208,9 @@
       <div class="mapa-area"><div><div class="jg-abas" id="abas-mapa">${[['dificil', 'Candidatos por vaga'], ['m', 'Filtro de gênero'], ['ng', 'Filtro de raça']].map(([k, t]) => `<button type="button" data-k="${k}" class="${k === modoMapa ? 'ativo' : ''}">${t}</button>`).join('')}</div>
         <svg id="mapa" viewBox="0 0 400 520" role="img" aria-label="Mapa do Brasil em quadrados"></svg><p class="mapa-leg" id="mapa-leg"></p></div>
         <div class="uf-painel" id="uf-painel"><p class="jg-dica">Toque em um estado para ver como é a disputa lá.</p></div></div>
+      ${(() => { const l = Object.keys(POS).map(u => ({ u, d: ufDe(u) })).filter(x => x.d.vagas).sort((a, z) => z.d.n / z.d.vagas - a.d.n / a.d.vagas);
+        return l.length ? dado('Candidatos por vaga em cada estado', G.barras(l.slice(0, 10).map(x => ({ nome: x.u, v: x.d.n / x.d.vagas, cor: T.laranja })), { fmt: v => dec(v, 1) + ' por vaga' }),
+          `<p>Neste cargo, a disputa mais apertada é em <b>${l[0].u}</b> (${dec(l[0].d.n / l[0].d.vagas, 1)} candidatos por vaga) e a mais folgada em <b>${l[l.length - 1].u}</b> (${dec(l[l.length - 1].d.n / l[l.length - 1].d.vagas, 1)}).</p>`, 'Candidatos e eleitos por estado · TSE 2026') : ''; })()}
       <div class="jg-acoes"><button type="button" class="jg-botao principal" id="b-uf" disabled>Escolha um estado</button><button type="button" class="jg-sec" id="b-uf-sorte">Sortear um estado</button></div></div>`);
     desenharMapa();
     document.querySelectorAll('#abas-mapa button').forEach(bt => bt.onclick = () => { modoMapa = bt.dataset.k; document.querySelectorAll('#abas-mapa button').forEach(x => x.classList.toggle('ativo', x === bt)); desenharMapa(); });
@@ -226,10 +240,10 @@
   }
 
   // =================================================================
-  // 4. SUA CANDIDATURA: sortear um candidato real ou registrar a sua na urna
+  // 4. SUA CANDIDATURA: escolher um candidato real ou criar o seu (com avatar) e registrar na urna
   // =================================================================
-  const FILTROS = [['Qualquer perfil', () => true], ['Mulher negra', c => c.mulher && c.raca === 'N'], ['Mulher branca', c => c.mulher && c.raca === 'B'],
-    ['Homem negro', c => !c.mulher && c.raca === 'N'], ['Homem branco', c => !c.mulher && c.raca === 'B'], ['Já tem mandato', c => c.mandato]];
+  const FILTROS = [['Todos', () => true], ['Mulheres negras', c => c.mulher && c.raca === 'N'], ['Mulheres brancas', c => c.mulher && c.raca === 'B'],
+    ['Homens negros', c => !c.mulher && c.raca === 'N'], ['Homens brancos', c => !c.mulher && c.raca === 'B'], ['Com mandato', c => c.mandato]];
   let filtro = 0;
   function perfil() {
     fase(3); hud.hidden = true; rolarTopo();
@@ -238,45 +252,91 @@
       <p class="jg-chapeu">Fase 4 · Sua candidatura · ${titulo(cargoDef.nome[0])}${cargoDef.nac ? '' : ' · ' + ufEscolhida}</p><h2>Quem você vai ser nesta eleição?</h2>
       <div class="perfil-grade">
         <div class="perfil-opcao"><div class="jg-mosaico" aria-hidden="true">${amostra.map((c, k) => `<div style="--k:${k}">${retrato(c)}</div>`).join('')}</div>
-          <h3>Um candidato de verdade</h3><p>Sorteamos alguém que disputou ${cargoDef.nac ? 'a Presidência' : 'em ' + ufEscolhida} em 2026. No fim, você descobre o que aconteceu com essa pessoa.</p>
-          <div class="jg-filtros">${FILTROS.map(([n], k) => `<button type="button" data-k="${k}" class="${k === filtro ? 'ativo' : ''}">${n}</button>`).join('')}</div>
-          <button type="button" class="jg-botao principal" id="b-sortear">Sortear meu candidato</button></div>
-        <div class="perfil-opcao destaque"><p class="jg-chapeu">Na urna</p><h3>Registre a sua candidatura</h3>
-          <p>Escolha o seu nome de urna, o seu número e o seu perfil, direto no teclado da urna. O modelo calcula a sua chance do mesmo jeito que para os candidatos reais.</p>
-          <div class="urna-mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div>
-          <button type="button" class="jg-botao" id="b-urna">Ir para a urna</button></div>
+          <h3>Um candidato de verdade</h3><p>Escolha quem você quer ser entre os ${num(doLugar().length)} que disputaram ${cargoDef.nac ? 'a Presidência' : 'em ' + ufEscolhida} em 2026. No fim, você descobre o que aconteceu com essa pessoa.</p>
+          <button type="button" class="jg-botao principal" id="b-real">Escolher um candidato</button></div>
+        <div class="perfil-opcao destaque"><div class="avatar-vitrine" aria-hidden="true">${[0, 1, 2, 3].map(i => `<span class="jg-foto jg-avatar">${J.avatarSVG(avatarAleatorio(i * 7 + 3))}</span>`).join('')}</div>
+          <h3>Crie o seu candidato</h3><p>Monte o seu avatar, escolha o nome de urna e registre o seu número e o seu perfil na urna. O modelo calcula a sua chance do mesmo jeito.</p>
+          <button type="button" class="jg-botao" id="b-criar">Criar o meu candidato</button></div>
       </div></div>`);
-    document.querySelectorAll('.jg-filtros button').forEach(bt => bt.onclick = () => { filtro = +bt.dataset.k; document.querySelectorAll('.jg-filtros button').forEach(x => x.classList.toggle('ativo', x === bt)); });
-    $('b-sortear').onclick = sortear;
-    $('b-urna').onclick = registrar;
+    $('b-real').onclick = escolherReal;
+    $('b-criar').onclick = criar;
   }
-  function sortear() {
-    let todos = doLugar().filter(FILTROS[filtro][1]); if (!todos.length) todos = info().lista.filter(FILTROS[filtro][1]); if (!todos.length) todos = doLugar();
-    const ganhou = Math.random() < todos.filter(c => c.eleito).length / todos.length, mesmos = todos.filter(c => c.eleito === ganhou);
-    const escolhido = sorteia(comFoto(mesmos.length ? mesmos : todos)), pool = comFoto(todos);
-    mostrar(`<div class="jg-roleta"><div class="jg-roleta-janela" id="rol">${retrato(sorteia(pool))}</div><p>Sorteando entre ${num(todos.length)} candidaturas…</p></div>`);
-    const jan = $('rol'); let n = 0, espera = 50;
-    const gira = () => { if (!document.body.contains(jan)) return; n++; jan.innerHTML = retrato(n > 16 ? escolhido : sorteia(pool)); bip(500 + n * 25, 0, 0.03);
-      if (n <= 16) { espera *= 1.13; setTimeout(gira, espera); } else { somFim(); setTimeout(() => ficha(escolhido, {}), 600); } };
-    PARADO ? ficha(escolhido, {}) : gira();
+
+  // ---------- escolher um candidato real (sem sorteio) ----------
+  function escolherReal() {
+    rolarTopo();
+    const base = doLugar().slice().sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR'));
+    let busca = '', mostrando = 36;
+    mostrar(`<div class="jg-tela"><p class="jg-chapeu">Fase 4 · Escolha o seu candidato</p><h2>Com quem você quer jogar?</h2>
+      <div class="escolha-barra"><input type="search" id="busca-cand" placeholder="Procure pelo nome de urna…" autocomplete="off" aria-label="Procurar candidato">
+        <div class="jg-filtros">${FILTROS.map(([n], k) => `<button type="button" data-k="${k}" class="${k === filtro ? 'ativo' : ''}">${n}</button>`).join('')}</div></div>
+      <p class="jg-dica" id="cont-cand"></p><div class="grade-cand" id="grade-cand"></div>
+      <button type="button" class="jg-sec" id="mais-cand">Mostrar mais</button>
+      <button type="button" class="jg-sec" id="volta-perfil">← Voltar</button></div>`);
+    const desenha = () => {
+      const q = busca.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const l = base.filter(FILTROS[filtro][1]).filter(c => !q || c.nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().includes(q));
+      $('cont-cand').textContent = `${num(l.length)} candidatos${l.length > mostrando ? ` · mostrando ${mostrando}` : ''}`;
+      $('grade-cand').innerHTML = l.slice(0, mostrando).map(c => `<button type="button" class="cand" data-i="${c.i}">${retrato(c, 'jg-foto-cand')}
+        <b>${esc(titulo(curto(c.nome)))}</b><small>${esc(c.partido)}</small><span class="chip">${grupo(c)}</span><span class="chip">${c.mandato ? 'com mandato' : 'sem mandato'}</span><span class="chip">${c.patrimonio ? reais(c.patrimonio) : 'sem bens'}</span></button>`).join('') || '<p class="jg-dica">Ninguém com esse nome. Tente outro filtro.</p>';
+      $('mais-cand').hidden = l.length <= mostrando;
+      $('grade-cand').querySelectorAll('.cand').forEach(b => b.onclick = () => { somFim(); ficha(J.TODOS[+b.dataset.i], {}); });
+    };
+    $('busca-cand').oninput = e => { busca = e.target.value; mostrando = 36; desenha(); };
+    document.querySelectorAll('.jg-filtros button').forEach(bt => bt.onclick = () => { filtro = +bt.dataset.k; mostrando = 36; document.querySelectorAll('.jg-filtros button').forEach(x => x.classList.toggle('ativo', x === bt)); desenha(); });
+    $('mais-cand').onclick = () => { mostrando += 36; desenha(); };
+    $('volta-perfil').onclick = perfil;
+    desenha();
   }
-  function registrar() {
+
+  // ---------- criar o seu candidato: avatar e nome ----------
+  const PELES = ['#f6d7c3', '#e9b994', '#c98e63', '#a5683f', '#7a4a2a', '#4e2f1c'];
+  const CABELOS = [['curto', 'Curto'], ['longo', 'Longo'], ['coque', 'Coque'], ['crespo', 'Black power'], ['trancas', 'Tranças'], ['careca', 'Careca']];
+  const CORES_CAB = ['#1c1410', '#4a2c1a', '#8a5a2b', '#d8b26a', '#b0472a', '#a9a4a0'];
+  const ACESS = [['nenhum', 'Nenhum'], ['oculos', 'Óculos'], ['brinco', 'Brincos'], ['ambos', 'Óculos e brincos']];
+  const ROUPAS = ['#7b2cbf', '#e2620f', '#1f8a5b', '#2459c4', '#c2185b', '#2b2b33'];
+  function avatarAleatorio(sem) { const r = rng(sem || Math.floor(Math.random() * 1e9)), p = l => l[Math.floor(r() * l.length)];
+    return { pele: p(PELES), cabelo: p(CABELOS)[0], corCabelo: p(CORES_CAB), acessorio: p(ACESS)[0], roupa: p(ROUPAS) }; }
+  let avatar = null, nomeUrna = '';
+  function criar() {
+    rolarTopo();
+    avatar = avatar || avatarAleatorio();
+    const linha = (rot, campo, ops, tipo) => `<div class="campo av-campo" data-campo="${campo}"><span>${rot}</span><div>${ops.map(o => { const v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : '';
+      return tipo === 'cor' ? `<button type="button" class="amostra ${avatar[campo] === v ? 'ativo' : ''}" data-v="${v}" style="--c:${v}" aria-label="cor ${v}"></button>` : `<button type="button" data-v="${v}" class="${avatar[campo] === v ? 'ativo' : ''}">${t}</button>`; }).join('')}</div></div>`;
+    mostrar(`<div class="jg-tela"><p class="jg-chapeu">Fase 4 · Crie o seu candidato</p><h2>Monte o seu avatar</h2>
+      <div class="criador"><div class="criador-previa"><span class="jg-foto jg-avatar jg-foto-grande" id="av-previa">${J.avatarSVG(avatar)}</span>
+          <button type="button" class="jg-sec" id="av-sorte">Sortear visual</button></div>
+        <div class="criador-op">
+          <label class="campo"><span>Nome de urna</span><input type="text" id="av-nome" maxlength="22" value="${esc(nomeUrna)}" placeholder="Como você quer aparecer na urna" autocomplete="off"></label>
+          ${linha('Tom de pele', 'pele', PELES, 'cor')}${linha('Cabelo', 'cabelo', CABELOS)}${linha('Cor do cabelo', 'corCabelo', CORES_CAB, 'cor')}${linha('Acessórios', 'acessorio', ACESS)}${linha('Cor da roupa', 'roupa', ROUPAS, 'cor')}
+        </div></div>
+      <p class="jg-dica" id="av-aviso"></p>
+      <div class="jg-acoes"><button type="button" class="jg-botao principal" id="av-ok">Ir para a urna →</button><button type="button" class="jg-sec" id="volta-perfil">← Voltar</button></div></div>`);
+    const atualiza = () => { $('av-previa').innerHTML = J.avatarSVG(avatar); };
+    document.querySelectorAll('.av-campo').forEach(cp => cp.querySelectorAll('button').forEach(b => b.onclick = () => { avatar[cp.dataset.campo] = b.dataset.v; somTecla();
+      cp.querySelectorAll('button').forEach(x => x.classList.toggle('ativo', x === b)); atualiza(); }));
+    $('av-sorte').onclick = () => { avatar = avatarAleatorio(); criar(); };
+    $('av-nome').oninput = e => { nomeUrna = e.target.value; };
+    $('volta-perfil').onclick = perfil;
+    $('av-ok').onclick = () => { const n = $('av-nome').value.trim(); if (!n) { $('av-aviso').textContent = 'Escreva o seu nome de urna antes de seguir.'; $('av-nome').focus(); return; } nomeUrna = n; registrar(n, Object.assign({}, avatar)); };
+    setTimeout(() => $('av-nome') && $('av-nome').focus(), 100);
+  }
+  function registrar(nome, av) {
     rolarTopo();
     const ord = J.partidosOrd, meio = ord[Math.floor(ord.length / 2)];
-    mostrar(`<div class="jg-tela"><p class="jg-chapeu">Fase 4 · Registro de candidatura</p><h2>Registre a sua candidatura na urna</h2>
+    mostrar(`<div class="jg-tela"><p class="jg-chapeu">Fase 4 · Registro de candidatura</p><h2>Agora registre ${esc(nome)} na urna</h2>
       <p class="jg-lead">Use o teclado da urna (ou o do computador): os números escolhem, <b>CONFIRMA</b> segue, <b>CORRIGE</b> apaga.</p><div id="urna-reg"></div></div>`);
     urna($('urna-reg'), { cabeca: 'REGISTRO · ' + titulo(cargoDef.nome[0]).toUpperCase(), passos: [
-      { tipo: 'texto', campo: 'nome', titulo: 'Seu nome de urna', max: 22 },
-      { tipo: 'numero', campo: 'numero', titulo: `Seu número de candidato (${cargoDef.dig} dígitos)`, digitos: cargoDef.dig },
+      { tipo: 'numero', campo: 'numero', titulo: `Seu número de candidato (${cargoDef.dig} dígitos)`, digitos: cargoDef.dig, mostra: d => `<div class="u-cand"><span class="jg-foto jg-avatar jg-foto-rival">${J.avatarSVG(av)}</span><div><b>${esc(nome)}</b><span>número ${esc(d)}</span></div></div>` },
       { tipo: 'opcoes', campo: 'partido', titulo: 'Seu partido', opcoes: [[ord[0], `Um partido grande (${ord[0]})`], [meio, `Um partido médio (${meio})`], [ord[ord.length - 1], `Um partido pequeno (${ord[ord.length - 1]})`]] },
       { tipo: 'opcoes', campo: 'genero', titulo: 'Gênero', opcoes: [['F', 'Mulher'], ['M', 'Homem']] },
-      { tipo: 'opcoes', campo: 'raca', titulo: 'Cor ou raça', opcoes: [['N', 'Preta ou parda'], ['B', 'Branca'], ['O', 'Amarela ou indígena']] },
+      { tipo: 'opcoes', campo: 'raca', titulo: 'Cor ou raça (autodeclarada)', opcoes: [['N', 'Preta ou parda'], ['B', 'Branca'], ['O', 'Amarela ou indígena']] },
       { tipo: 'opcoes', campo: 'idade', titulo: 'Idade', opcoes: [['24', 'Até 29 anos'], ['37', '30 a 44 anos'], ['52', '45 a 59 anos'], ['66', '60 anos ou mais']] },
       { tipo: 'opcoes', campo: 'superior', titulo: 'Ensino superior completo?', opcoes: [['1', 'Sim'], ['0', 'Não']] },
       { tipo: 'opcoes', campo: 'pat', titulo: 'Patrimônio (soma dos seus bens)', opcoes: [['0', 'Nenhum bem'], ['40000', 'Até R$ 100 mil'], ['350000', 'R$ 100 mil a R$ 1 milhão'], ['3000000', 'R$ 1 a 10 milhões'], ['25000000', 'Mais de R$ 10 milhões']] },
       { tipo: 'opcoes', campo: 'mandato', titulo: 'Você já tem mandato político?', opcoes: [['0', 'Não'], ['1', 'Sim']] }
-    ], aoFim: r => ficha({ ficticio: true, nome: r.nome, cargo: cargoReal(), uf: cargoDef.nac ? null : ufEscolhida, partido: r.partido, mulher: r.genero === 'F', raca: r.raca,
-        superior: r.superior === '1', patrimonio: +r.pat, mandato: r.mandato === '1', idade: +r.idade, eleito: false, votos: null }, { numero: r.numero }) });
+    ], aoFim: r => { UI.conquista('urna'); ficha({ ficticio: true, nome, avatar: av, cargo: cargoReal(), uf: cargoDef.nac ? null : ufEscolhida, partido: r.partido, mulher: r.genero === 'F', raca: r.raca,
+        superior: r.superior === '1', patrimonio: +r.pat, mandato: r.mandato === '1', idade: +r.idade, eleito: false, votos: null }, { numero: r.numero }); } });
   }
 
   // ---------- caixa e estado da campanha ----------
@@ -294,15 +354,23 @@
   function novoEstado(c, semente) {
     const r = rng(semente), it = caixaInicial(c), lg = J.base(c);
     const ev = c.mulher && r() < 0.6 ? 'cota' : ['viral', 'falsa', 'debate'][Math.floor(r() * 3)];
-    return { c, semente, itens: it, caixa: it.reduce((s, x) => s + x[1], 0), lg, extra: 0, hist: [logistica(lg)], u: r(), u2: r(), q: Math.floor(r() * 4), evento: ev,
-      escolhas: [], semana: 0, cliques: 0, acertou: false, investir: 0 };
+    return { c, semente, itens: it, caixa: it.reduce((s, x) => s + x[1], 0), lg, extra: 0, hist: [logistica(lg)], u: r(), u2: r(), u3: r(), q: Math.floor(r() * 6), evento: ev,
+      cen: [0, 1, 2, 3, 4].map(() => Math.floor(r() * 3)), escolhas: [], semana: 0, cliques: 0, cliques2: 0, acertou: false, acertou2: false, investir: 0 };
   }
   let st = null, rivais = [], pers = null, resultado = null;
 
   // personalização
   const TEMAS = ['Saúde', 'Educação', 'Segurança', 'Emprego', 'Meio ambiente', 'Cultura'];
   const CORES = [['#7b2cbf', 'Roxo'], ['#e2620f', 'Laranja'], ['#1f8a5b', 'Verde'], ['#2459c4', 'Azul'], ['#c2185b', 'Magenta']];
-  const slogans = (c, tema) => [`${tema} de verdade, gente de verdade`, 'Coragem para mudar', `${nomeDe(c).split(' ')[0]} é ${tema.toLowerCase()}!`, 'Quem cabe na política? Todo mundo.'];
+  const SLOGANS = {
+    'Saúde': ['Saúde não espera', 'Posto aberto, fila zero', '{n}: cuidar de gente é prioridade', 'Mais médicos no seu bairro', 'Saúde perto de casa', 'Remédio na mão, respeito no coração'],
+    'Educação': ['Escola boa é escola pública', 'Educação muda tudo', '{n} pela sala de aula', 'Professor valorizado, futuro garantido', 'Creche para toda criança', 'Aprender é direito de todos'],
+    'Segurança': ['Rua segura, gente feliz', 'Paz no bairro', '{n}: segurança com inteligência', 'Iluminação e prevenção', 'Proteger quem mais precisa', 'Andar sem medo'],
+    'Emprego': ['Trabalho e renda para todos', 'Emprego já!', '{n}: oportunidade para quem quer trabalhar', 'Primeiro emprego, primeiro passo', 'Apoio a quem empreende', 'Carteira assinada, vida melhor'],
+    'Meio ambiente': ['Cuidar do planeta é cuidar de nós', 'Cidade verde, cidade viva', '{n} pelo clima', 'Rio limpo, bairro feliz', 'Energia limpa já', 'Mais árvores, menos calor'],
+    'Cultura': ['Cultura é direito', 'Arte em cada esquina', '{n}: a cultura do povo no poder', 'Mais bibliotecas, mais sonhos', 'Festa, memória e identidade', 'Quem cria merece apoio']
+  };
+  const slogans = (c, tema) => (SLOGANS[tema] || SLOGANS['Saúde']).map(s => s.replace('{n}', nomeDe(c).split(' ')[0]));
 
   // "quem se parece com você": eleitos do mesmo cargo com mais características em comum
   const faixaPat = v => !v ? 0 : v < 1e5 ? 1 : v < 1e6 ? 2 : v < 1e7 ? 3 : 4, faixaIdade = v => v == null ? -1 : v < 30 ? 0 : v < 45 ? 1 : v < 60 ? 2 : 3;
@@ -436,51 +504,112 @@
   const ilustracao = (t, rot) => `<svg class="jg-ilu" viewBox="0 0 640 240" role="img" aria-label="${esc(rot)}" preserveAspectRatio="xMidYMid slice">${ILU[t]()}</svg>`;
 
   // perguntas do debate: todas saem dos dados da Parte 1
-  function perguntaDebate(s) {
-    const c = s.c, d = ufDe(c.uf || 'XX'), rz = S.patMedianaEl / Math.max(1, S.patMedianaNao), mEl = S.grupos[0].el;
+  function perguntaDebate(s, extra = 0) {
+    const c = s.c, d = ufDe(c.uf || 'XX'), rz = S.patMedianaEl / Math.max(1, S.patMedianaNao), mEl = S.grupos[0].el, sup = S.grupos[4];
     const P = [
       { q: '“Que fatia dos eleitos de 2026, somando todos os cargos, são mulheres?”', ok: pct(mEl, 0), erradas: [pct(S.grupos[0].cand, 0), '51%', pct(mEl / 2, 0)], exp: `Mulheres foram ${pct(S.grupos[0].cand, 0)} das candidaturas e só ${pct(mEl, 0)} dos eleitos.` },
       { q: '“O patrimônio mediano dos eleitos é quantas vezes o dos não eleitos?”', ok: dec(rz, 0) + ' vezes', erradas: ['2 vezes', dec(rz * 4, 0) + ' vezes', 'É o mesmo'], exp: `O eleito mediano declarou ${reais(S.patMedianaEl)}; o não eleito, ${reais(S.patMedianaNao)}.` },
       { q: '“Segundo os dados, o que mais aumenta a chance de alguém se eleger?”', ok: 'Já ter mandato', erradas: ['Ser homem', 'Ter ensino superior', 'Ter 10 vezes mais patrimônio'], exp: `Já ter mandato multiplica a chance por ${dec(J.or('C(tem_mandato)[T.Sim]')[0], 1)}.` },
-      d.vagas ? { q: `“Quantos candidatos disputam cada vaga deste cargo ${cargoDef.nac ? 'no país' : 'em ' + c.uf}?”`, ok: dec(d.n / d.vagas, 0), erradas: [dec(d.n / d.vagas * 3, 0), dec(Math.max(2, d.n / d.vagas / 3), 0), dec(d.n / d.vagas * 10, 0)], exp: `São ${num(d.n)} candidatos para ${d.vagas} ${d.vagas === 1 ? 'vaga' : 'vagas'}.` } : null
+      d.vagas ? { q: `“Quantos candidatos disputam cada vaga deste cargo ${cargoDef.nac ? 'no país' : 'em ' + c.uf}?”`, ok: dec(d.n / d.vagas, 0), erradas: [dec(d.n / d.vagas * 3, 0), dec(Math.max(2, d.n / d.vagas / 3), 0), dec(d.n / d.vagas * 10, 0)], exp: `São ${num(d.n)} candidatos para ${d.vagas} ${d.vagas === 1 ? 'vaga' : 'vagas'}.` } : null,
+      { q: '“Que fatia dos eleitos tem ensino superior completo?”', ok: pct(sup.el, 0), erradas: [pct(sup.cand, 0), pct(Math.max(5, sup.el - 40), 0), '100%'], exp: `Entre os candidatos eram ${pct(sup.cand, 0)}; entre os eleitos, ${pct(sup.el, 0)}.` },
+      { q: '“Quantos candidatos de 2026 não declararam nenhum bem?”', ok: pct(S.semBens, 0), erradas: [pct(S.semBens / 3, 0), pct(Math.min(90, S.semBens * 2), 0), '1%'], exp: `${pct(S.semBens, 0)} das candidaturas declararam patrimônio zero.` }
     ].filter(Boolean);
-    const p = P[s.q % P.length], r = rng(s.semente + 11);
+    const p = P[(s.q + extra * 3) % P.length], r = rng(s.semente + 11 + extra);
     return Object.assign({}, p, { ops: embaralha([...new Set([p.ok, ...p.erradas])], r) });
   }
+
+  // cartas de dado novas (13 a 16)
+  const CARGOS_K = () => CARGOS.map(d => [d.k === 'Deputado Estadual' ? 'Dep. estadual' : d.k === 'Deputado Federal' ? 'Dep. federal' : d.k, J.cargoInfo(d.k).lista]);
+  const pctG = (l, t) => l.length ? 100 * l.filter(t).length / l.length : 0;
+  const cartaDiploma = () => dado('O diploma pesa?', G.halteres(CARGOS_K().map(([n, l]) => ({ nome: n, cand: pctG(l, c => c.superior), el: pctG(l.filter(c => c.eleito), c => c.superior) }))),
+    `<p>Fatia com <b>ensino superior completo</b> entre candidatos e eleitos, por cargo. Entre todos os eleitos são ${pct(S.grupos[4].el, 0)}, contra ${pct(S.grupos[4].cand, 0)} dos candidatos. Equipes de campanha costumam repetir esse perfil.</p>`, 'Tabela cruzada escolaridade × eleito · TSE 2026');
+  const cartaIdade = () => { const F = [['até 29', 0, 30], ['30–39', 30, 40], ['40–49', 40, 50], ['50–59', 50, 60], ['60+', 60, 200]], el = J.TODOS.filter(c => c.eleito);
+    return dado('A idade de quem se elege', G.halteres(F.map(([n, a, z]) => ({ nome: n + ' anos', cand: pctG(J.TODOS, c => c.idade >= a && c.idade < z), el: pctG(el, c => c.idade >= a && c.idade < z) }))),
+      `<p>Distribuição da idade entre candidatos e eleitos. A idade mediana de quem se candidata é ${S.idadeMediana} anos; a de quem se elege é ${J.mediana(el.map(c => c.idade))} anos. Jovens se candidatam, mas pouco se elegem.</p>`, 'Faixas etárias × eleito · TSE 2026'); };
+  const cartaVotos = () => { const l = info().lista.filter(c => c.votos != null), md = t => J.mediana(l.filter(t).map(c => c.votos)) || 0;
+    return dado('Votos medianos por grupo', G.barras([{ nome: 'Homens', v: md(c => !c.mulher) }, { nome: 'Mulheres', v: md(c => c.mulher), cor: T.roxo }, { nome: 'Brancos', v: md(c => c.raca === 'B') }, { nome: 'Negros', v: md(c => c.raca === 'N'), cor: T.roxo },
+      { nome: 'Com mandato', v: md(c => c.mandato), cor: T.laranja }, { nome: 'Sem mandato', v: md(c => !c.mandato) }], { fmt: v => num(v) + ' votos' }),
+      `<p>Mediana de votos por grupo (${nomeCargo({ mulher: false })}). Variável quantitativa (votos) cruzada com categorias (gênero, raça, mandato): a mediana resiste aos poucos candidatos com votações enormes.</p>`, 'Categórica × quantitativa · TSE 2026'); };
+  const cartaMandato = () => dado('Quem já está dentro', G.halteres(CARGOS_K().map(([n, l]) => ({ nome: n, cand: pctG(l, c => c.mandato), el: pctG(l.filter(c => c.eleito), c => c.mandato) }))),
+    `<p>Fatia de quem <b>já tinha mandato</b> entre candidatos e eleitos. Poucos candidatos têm mandato, mas eles ocupam boa parte das cadeiras: no modelo, ter mandato multiplica a chance por ${dec(J.or('C(tem_mandato)[T.Sim]')[0], 1)}.</p>`, 'Tabela cruzada mandato × eleito · TSE 2026');
 
   function rodadas(c, s) {
     const meu = c.partido, top = J.partidosOrd.find(x => x !== meu) || meu, nanico = J.partidosOrd[J.partidosOrd.length - 1] || meu, tx = J.taxaPartido;
     const dTop = lim(logit(tx(top)) - logit(tx(meu)), 0, 1.2) * 0.5, dNan = lim(logit(tx(nanico)) - logit(tx(meu)), -1.2, 0) * 0.5, tema = (pers && pers.tema) || 'o bairro';
-    const R = [
-      { ilu: 'partido', titulo: 'A escolha do partido', texto: `Você está no <b>${esc(meu)}</b>, que elegeu ${fmtP(tx(meu))} dos seus candidatos a deputado federal (uma medida da força do partido). Partido grande tem mais tempo de TV e dinheiro, mas também mais gente disputando.`,
-        opcoes: [{ t: `Ficar no ${meu}`, d: 'Nada muda: você já conhece a casa.', custo: 0, ef: () => [0, `Você fica no ${meu}.`] },
-                 { t: `Migrar para o ${top}`, d: `Taxa de eleição de ${fmtP(tx(top))}. Custa caro entrar.`, custo: 2, ef: () => [dTop, `O ${top} te aceita, e a estrutura dele ajuda.`] },
-                 { t: `Ir para o ${nanico}`, d: `Lá você seria a estrela e ganha +1 de caixa. Taxa de eleição: ${fmtP(tx(nanico))}.`, custo: -1, ef: () => [dNan, `No ${nanico} sobra espaço, mas faltam votos na legenda.`] }],
-        dado: () => { const lista = [...new Set(J.partidosOrd.slice(0, 8).concat(J.partidosOrd.slice(-2)).concat(J.partidosOrd.includes(meu) ? [meu] : []))];
-          return dado('Taxa de eleição por partido (deputado federal)', G.barras(lista.map(x => ({ nome: x, v: 100 * tx(x), cor: x === meu ? T.roxo : x === top ? T.laranja : T.base, forte: x === meu, nota: x === meu ? 'seu partido' : '' }))),
-            `<p>O partido importa: a taxa vai de ${fmtP(tx(nanico))} a ${fmtP(tx(J.partidosOrd[0]))}. No jogo, metade dessa diferença vira efeito, porque partido grande também traz mais concorrência interna.</p>`, 'Proporção de eleitos entre os candidatos a deputado federal de cada partido com 15 ou mais candidaturas'); } },
-      { ilu: 'rua', titulo: 'Como chegar no eleitor', texto: `São 45 dias de campanha, e a sua bandeira é <b>${esc(tema)}</b>. Onde você coloca a sua energia (e o seu dinheiro)?`,
-        opcoes: [{ t: 'Corpo a corpo nos bairros', d: 'Grátis. Você mesmo(a) vai conquistar eleitores, um por um, em 10 segundos: prepare o dedo!', custo: 0, mini: true, ef: s2 => [Math.min(0.45, 0.03 * s2.cliques), `Você conquistou ${s2.cliques} eleitores no corpo a corpo.`] },
-                 { t: 'Impulsionar nas redes', d: `Anúncios sobre ${tema.toLowerCase()} no celular do eleitor.`, custo: 1, ef: () => [0.3, 'Seus vídeos chegam a milhares de pessoas.'] },
-                 { t: 'Carreata e santinhos', d: 'A campanha clássica, e a mais cara.', custo: 2, ef: () => [0.45, 'Seu número está em todo poste da cidade.'] }],
-        dado: () => GA ? dado('Dinheiro de campanha: quem gasta mais, e o que isso compra', G.barras([{ nome: 'Eleitos', v: GA.mediana_eleitos, cor: T.laranja }, { nome: 'Não eleitos', v: GA.mediana_nao_eleitos },
-            { nome: 'Homens', v: GA.mediana_homens }, { nome: 'Mulheres', v: GA.mediana_mulheres, cor: T.roxo }, { nome: 'Brancos', v: GA.mediana_brancos }, { nome: 'Negros', v: GA.mediana_negros, cor: T.roxo }], { fmt: v => reais(v) }),
-            `<p>Gastar 10 vezes mais multiplica a chance de se eleger por <b>${dec(GA.or_gasto, 1)}</b>. E o dinheiro não chega igual: por isso, no jogo, homens e brancos começam com mais moedas.</p>`, 'Gasto mediano declarado ao TSE (prestação de contas 2026)')
-          : dado('Patrimônio: eleitos × não eleitos', G.barras([{ nome: 'Eleitos', v: S.patMedianaEl, cor: T.laranja }, { nome: 'Não eleitos', v: S.patMedianaNao }], { fmt: v => reais(v) }), `<p>O eleito mediano declarou <b>${dec(S.patMedianaEl / Math.max(1, S.patMedianaNao), 0)} vezes</b> o patrimônio do não eleito.</p>`, 'Patrimônio mediano declarado') },
-      { ilu: 'apoio', titulo: 'Um apoio de peso', texto: `O apoio de ${cargoDef.apoio} pode levar muitos votos. Mas apoio vai para quem parece que vai ganhar: quanto maior a sua chance agora, maior a chance de topar.`,
-        opcoes: [{ t: 'Pedir o apoio', d: 'Custa 1 de caixa para a viagem e a negociação.', custo: 1, ef: s2 => s2.u < Math.min(0.9, 0.12 + 2.5 * logistica(s2.lg)) ? [0.6, 'O apoio vem: vocês sobem juntos no palanque!'] : [0, 'A resposta é “vamos pensar”. Na prática, o apoio vai para outro candidato.'] },
-                 { t: 'Seguir sem padrinho', d: 'Você guarda o caixa e a independência.', custo: 0, ef: () => [0, 'Você segue sem padrinho.'] }],
-        dado: () => dado('Quem já é forte fica mais forte: o que pesa na chance de se eleger', G.pesos(), `<p>Razões de chance da regressão logística, com intervalo de confiança de 95%. <b>Já ter mandato</b> multiplica a chance por ${dec(J.or('C(tem_mandato)[T.Sim]')[0], 1)}, mais do que qualquer outra característica. É a mesma lógica do apoio: ele vai para quem já está na frente.</p>`, 'Regressão logística · candidatos ao Legislativo, TSE 2026') },
-      null,
-      { ilu: 'urna', titulo: 'A reta final', texto: 'Falta uma semana. Quanto do que sobrou no caixa você coloca em propaganda?',
-        opcoes: [{ t: 'Investir em rádio e TV', d: 'Arraste para escolher quantas moedas investir: cada uma vira inserções na reta final.', custo: 'slider', ef: (s2, g) => [0.15 * g, g ? `Você investe ${g} moeda(s) na reta final.` : 'Você não investe nada.'] },
-                 { t: 'Mutirão de voluntários', d: 'Grátis: amigos e militantes no último fim de semana.', custo: 0, ef: () => [0.2, 'Os voluntários fazem barulho no último fim de semana.'] }],
-        dado: () => dado('No fim, o dinheiro separa quem entra de quem fica', G.barras([{ nome: 'Eleitos', v: S.patMedianaEl, cor: T.laranja }, { nome: 'Todos', v: S.patMediana }, { nome: 'Não eleitos', v: S.patMedianaNao }], { fmt: v => reais(v) }),
-          `<p>O eleito mediano tem <b>${dec(S.patMedianaEl / Math.max(1, S.patMedianaNao), 0)} vezes</b> o patrimônio do não eleito. Como o patrimônio não segue a curva normal, a Parte 1 usou o teste de <b>Mann-Whitney</b>: U = ${num(S.U)}, z = ${dec(S.mwZ, 1)}, p &lt; 0,001. A diferença não é acaso.</p>`, 'Teste de Mann-Whitney · patrimônio de eleitos × não eleitos, todos os cargos') }
-    ];
+    const cartaPartido = () => { const lista = [...new Set(J.partidosOrd.slice(0, 8).concat(J.partidosOrd.slice(-2)).concat(J.partidosOrd.includes(meu) ? [meu] : []))];
+      return dado('Taxa de eleição por partido (deputado federal)', G.barras(lista.map(x => ({ nome: x, v: 100 * tx(x), cor: x === meu ? T.roxo : x === top ? T.laranja : T.base, forte: x === meu, nota: x === meu ? 'seu partido' : '' }))),
+        `<p>O partido importa: a taxa vai de ${fmtP(tx(nanico))} a ${fmtP(tx(J.partidosOrd[0]))}. No jogo, metade dessa diferença vira efeito, porque partido grande também traz mais concorrência interna.</p>`, 'Proporção de eleitos entre os candidatos a deputado federal de cada partido com 15 ou mais candidaturas'); };
+    const cartaDinheiro = () => GA ? dado('Dinheiro de campanha: quem gasta mais, e o que isso compra', G.barras([{ nome: 'Eleitos', v: GA.mediana_eleitos, cor: T.laranja }, { nome: 'Não eleitos', v: GA.mediana_nao_eleitos },
+        { nome: 'Homens', v: GA.mediana_homens }, { nome: 'Mulheres', v: GA.mediana_mulheres, cor: T.roxo }, { nome: 'Brancos', v: GA.mediana_brancos }, { nome: 'Negros', v: GA.mediana_negros, cor: T.roxo }], { fmt: v => reais(v) }),
+        `<p>Gastar 10 vezes mais multiplica a chance de se eleger por <b>${dec(GA.or_gasto, 1)}</b>. E o dinheiro não chega igual: por isso, no jogo, homens e brancos começam com mais moedas.</p>`, 'Gasto mediano declarado ao TSE (prestação de contas 2026)')
+      : dado('Patrimônio: eleitos × não eleitos', G.barras([{ nome: 'Eleitos', v: S.patMedianaEl, cor: T.laranja }, { nome: 'Não eleitos', v: S.patMedianaNao }], { fmt: v => reais(v) }), `<p>O eleito mediano declarou <b>${dec(S.patMedianaEl / Math.max(1, S.patMedianaNao), 0)} vezes</b> o patrimônio do não eleito.</p>`, 'Patrimônio mediano declarado');
+    const cartaPesos = () => dado('Quem já é forte fica mais forte: o que pesa na chance de se eleger', G.pesos(), `<p>Razões de chance da regressão logística, com intervalo de confiança de 95%. <b>Já ter mandato</b> multiplica a chance por ${dec(J.or('C(tem_mandato)[T.Sim]')[0], 1)}, mais do que qualquer outra característica.</p>`, 'Regressão logística · candidatos ao Legislativo, TSE 2026');
+    const cartaMW = () => dado('No fim, o dinheiro separa quem entra de quem fica', G.barras([{ nome: 'Eleitos', v: S.patMedianaEl, cor: T.laranja }, { nome: 'Todos', v: S.patMediana }, { nome: 'Não eleitos', v: S.patMedianaNao }], { fmt: v => reais(v) }),
+      `<p>O eleito mediano tem <b>${dec(S.patMedianaEl / Math.max(1, S.patMedianaNao), 0)} vezes</b> o patrimônio do não eleito. Como o patrimônio não segue a curva normal, a Parte 1 usou o teste de <b>Mann-Whitney</b>: U = ${num(S.U)}, z = ${dec(S.mwZ, 1)}, p &lt; 0,001. A diferença não é acaso.</p>`, 'Teste de Mann-Whitney · patrimônio de eleitos × não eleitos, todos os cargos');
     const laranjas = () => dado(c.mulher ? 'Candidaturas que só existem no papel' : 'Enquanto isso, na cota de gênero', G.laranjas(),
       `<p>A lei obriga cada partido a lançar pelo menos 30% de mulheres. Muitas recebem quase nenhum voto: ${J.D.laranjas ? `<b>${dec(J.D.laranjas.Feminino.menos_100 / J.D.laranjas.Masculino.menos_100, 1)} vezes</b> mais que os homens ficaram abaixo de 100 votos` : 'veja o dossiê'}. Votação inexpressiva é um dos indícios de candidatura fictícia (TSE, Súmula 73), mas sozinha não prova fraude.</p>`, 'Votos recebidos por gênero · TSE 2026');
-    const quiz = perguntaDebate(s);
+    const pesquisa = () => { const l = [c, ...rivais].map(x => ({ nome: x === c ? 'Você' : nomeDe(x), v: 100 * (x === c ? logistica(s.lg) : J.chance(x)) })).sort((a, z) => z.v - a.v);
+      return `<div class="pesquisa">${l.map(x => `<div class="${x.nome === 'Você' ? 'voce' : ''}"><span>${esc(x.nome)}</span><i style="width:${Math.max(2, 100 * x.v / l[0].v)}%"></i><b>${dec(x.v, 1)}%</b></div>`).join('')}</div>`; };
+    const naFrente = () => logistica(s.lg) >= J.mediana(rivais.map(J.chance));
+
+    const POOL = [
+      [ // semana 1: montando a campanha
+        { ilu: 'partido', titulo: 'A escolha do partido', texto: `Você está no <b>${esc(meu)}</b>, que elegeu ${fmtP(tx(meu))} dos seus candidatos a deputado federal (uma medida da força do partido). Partido grande tem mais tempo de TV e dinheiro, mas também mais gente disputando.`,
+          opcoes: [{ t: `Ficar no ${meu}`, d: 'Nada muda: você já conhece a casa.', custo: 0, ef: () => [0, `Você fica no ${meu}.`] },
+                   { t: `Migrar para o ${top}`, d: `Taxa de eleição de ${fmtP(tx(top))}. Custa caro entrar.`, custo: 2, ef: () => [dTop, `O ${top} te aceita, e a estrutura dele ajuda.`] },
+                   { t: `Ir para o ${nanico}`, d: `Lá você seria a estrela e ganha +1 de caixa. Taxa de eleição: ${fmtP(tx(nanico))}.`, custo: -1, ef: () => [dNan, `No ${nanico} sobra espaço, mas faltam votos na legenda.`] }], dado: cartaPartido },
+        { ilu: 'apoio', titulo: 'Quem vai coordenar a sua campanha?', texto: 'Toda campanha precisa de alguém para organizar agenda, equipe e dinheiro. Quem você chama?',
+          opcoes: [{ t: 'Uma amiga de confiança', d: 'Grátis e leal, mas nunca fez campanha.', custo: 0, ef: () => [0.1, 'Ela conhece o bairro como ninguém.'] },
+                   { t: 'Um marqueteiro famoso', d: 'Profissional e caro.', custo: 2, ef: () => [0.45, 'Seu material fica com cara de campanha grande.'] },
+                   { t: 'Uma liderança comunitária', d: 'Custa 1. Pode abrir muitas portas… ou nenhuma.', custo: 1, ef: s2 => s2.u3 < 0.55 ? [0.4, 'Ela traz associações inteiras para a sua campanha.'] : [0.1, 'O apoio fica restrito ao bairro dela.'] }], dado: cartaDiploma },
+        { ilu: 'viral', titulo: 'De onde vem o dinheiro?', texto: 'Antes de sair às ruas, é preciso fechar as contas. Como você financia a campanha?',
+          opcoes: [{ t: 'Vaquinha virtual', d: 'Ganha +1 de caixa com pequenas doações de quem acredita em você.', custo: -1, ef: () => [0.1, 'Centenas de pequenas doações: dinheiro e engajamento.'] },
+                   { t: 'Doação de um empresário', d: 'Ganha +2 de caixa, mas a notícia pode pegar mal.', custo: -2, ef: s2 => s2.u3 < 0.5 ? [-0.2, 'A doação vira manchete e pega mal.'] : [0, 'Ninguém repara na doação.'] },
+                   { t: 'Só o fundo do partido', d: 'Nada muda.', custo: 0, ef: () => [0, 'Você segue com o que o partido mandou.'] }], dado: cartaDinheiro }
+      ],
+      [ // semana 2: indo para a rua
+        { ilu: 'rua', titulo: 'Como chegar no eleitor', texto: `São 45 dias de campanha, e a sua bandeira é <b>${esc(tema)}</b>. Onde você coloca a sua energia (e o seu dinheiro)?`,
+          opcoes: [{ t: 'Corpo a corpo nos bairros', d: 'Grátis. Você mesmo(a) vai conquistar eleitores, um por um, em 10 segundos: prepare o dedo!', custo: 0, mini: { campo: 'cliques', titulo: 'Corpo a corpo!', txt: 'Toque nos eleitores para entregar o seu santinho.', tempo: 10, conq: true }, ef: s2 => [Math.min(0.45, 0.03 * s2.cliques), `Você conquistou ${s2.cliques} eleitores no corpo a corpo.`] },
+                   { t: 'Impulsionar nas redes', d: `Anúncios sobre ${tema.toLowerCase()} no celular do eleitor.`, custo: 1, ef: () => [0.3, 'Seus vídeos chegam a milhares de pessoas.'] },
+                   { t: 'Carreata e santinhos', d: 'A campanha clássica, e a mais cara.', custo: 2, ef: () => [0.45, 'Seu número está em todo poste da cidade.'] }], dado: cartaDinheiro },
+        { ilu: 'debate', titulo: 'Gravando o programa na TV', texto: 'Você tem alguns segundos no horário eleitoral. Qual o tom do seu programa?',
+          opcoes: [{ t: 'Propostas concretas', d: `Custa 1. Explicar o seu plano para ${tema.toLowerCase()}.`, custo: 1, ef: () => [0.3, 'O programa é claro e passa confiança.'] },
+                   { t: 'A sua história de vida', d: 'Custa 1. Emociona… se der certo.', custo: 1, ef: s2 => s2.u3 < 0.5 ? [0.45, 'O vídeo emociona e circula nos grupos.'] : [0.15, 'Bonito, mas pouca gente lembra.'] },
+                   { t: 'Atacar um adversário', d: 'Grátis e arriscado.', custo: 0, ef: s2 => s2.u3 < 0.3 ? [0.35, 'O ataque acerta em cheio.'] : [-0.25, 'O ataque volta contra você.'] }], dado: cartaVotos },
+        { ilu: 'rua', titulo: 'Panfletagem relâmpago na feira', texto: 'Domingo de manhã, a feira está lotada. Você tem 8 segundos antes de a chuva chegar.',
+          opcoes: [{ t: 'Panfletar você mesmo(a)', d: 'Grátis. Toque no máximo de pessoas que conseguir em 8 segundos.', custo: 0, mini: { campo: 'cliques2', titulo: 'Panfletagem!', txt: 'Toque nas pessoas para entregar o panfleto.', tempo: 8 }, ef: s2 => [Math.min(0.4, 0.035 * s2.cliques2), `Você entregou ${s2.cliques2} panfletos.`] },
+                   { t: 'Mandar a equipe', d: 'Custa 1. Funciona sem você.', custo: 1, ef: () => [0.2, 'A equipe cobre a feira inteira.'] },
+                   { t: 'Ficar em casa', d: 'Descansar também é estratégia?', custo: 0, ef: () => [0, 'Seus adversários ocupam a feira.'] }], dado: cartaIdade }
+      ],
+      [ // semana 3: alianças
+        { ilu: 'apoio', titulo: 'Um apoio de peso', texto: `O apoio de ${cargoDef.apoio} pode levar muitos votos. Mas apoio vai para quem parece que vai ganhar: quanto maior a sua chance agora, maior a chance de topar.`,
+          opcoes: [{ t: 'Pedir o apoio', d: 'Custa 1 de caixa para a viagem e a negociação.', custo: 1, ef: s2 => s2.u < Math.min(0.9, 0.12 + 2.5 * logistica(s2.lg)) ? [0.6, 'O apoio vem: vocês sobem juntos no palanque!'] : [0, 'A resposta é “vamos pensar”. Na prática, o apoio vai para outro candidato.'] },
+                   { t: 'Seguir sem padrinho', d: 'Você guarda o caixa e a independência.', custo: 0, ef: () => [0, 'Você segue sem padrinho.'] }], dado: cartaPesos },
+        { ilu: 'apoio', titulo: 'A associação de moradores quer um compromisso', texto: 'A maior associação de moradores da região oferece apoio, mas pede que você assine uma lista de compromissos.',
+          opcoes: [{ t: 'Assinar tudo', d: 'Apoio garantido, menos liberdade.', custo: 0, ef: () => [0.3, 'A associação faz campanha por você.'] },
+                   { t: 'Negociar ponto a ponto', d: 'Custa 1 em reuniões. Apoio menor, mas sincero.', custo: 1, ef: () => [0.2, 'Vocês fecham um acordo possível.'] },
+                   { t: 'Recusar', d: 'Você não quer amarras.', custo: 0, ef: () => [-0.05, 'A associação apoia outro candidato.'] }], dado: cartaMandato },
+        { ilu: 'viral', titulo: 'Saiu a primeira pesquisa', texto: `Uma pesquisa mostra como está a disputa (chances segundo o modelo):${pesquisa()}`,
+          opcoes: [{ t: 'Divulgar a pesquisa', d: 'Se você estiver bem, isso atrai votos; se não, afasta.', custo: 0, ef: s2 => naFrente() ? [0.25, 'Quem está na frente atrai o voto útil.'] : [-0.1, 'A pesquisa mostra que você está atrás, e o eleitor percebe.'] },
+                   { t: 'Ajustar o discurso', d: 'Custa 1 em pesquisa qualitativa.', custo: 1, ef: () => [0.25, 'Você descobre o que o eleitor quer ouvir.'] },
+                   { t: 'Ignorar a pesquisa', d: 'Pesquisa não vota.', custo: 0, ef: () => [0, 'Você segue o plano.'] }], dado: cartaMandato }
+      ],
+      null,
+      [ // semana 5: reta final
+        { ilu: 'urna', titulo: 'A reta final', texto: 'Falta uma semana. Quanto do que sobrou no caixa você coloca em propaganda?',
+          opcoes: [{ t: 'Investir em rádio e TV', d: 'Arraste para escolher quantas moedas investir: cada uma vira inserções na reta final.', custo: 'slider', ef: (s2, g) => [0.15 * g, g ? `Você investe ${g} moeda(s) na reta final.` : 'Você não investe nada.'] },
+                   { t: 'Mutirão de voluntários', d: 'Grátis: amigos e militantes no último fim de semana.', custo: 0, ef: () => [0.2, 'Os voluntários fazem barulho no último fim de semana.'] }], dado: cartaMW },
+        { ilu: 'debate', titulo: 'O último debate', texto: 'É o debate mais assistido da campanha. A pergunta vai ser sobre os números desta eleição.',
+          opcoes: [{ t: 'Encarar o debate', d: 'Grátis. Acertar a resposta vale muito; errar custa caro.', custo: 0, quiz: Object.assign(perguntaDebate(s, 1), { campo: 'acertou2' }), ef: s2 => s2.acertou2 ? [0.35, 'Você fecha a campanha em alta.'] : [-0.15, 'O erro vira meme na véspera da eleição.'] },
+                   { t: 'Mandar uma carta aberta', d: 'Custa 1. Seguro e discreto.', custo: 1, ef: () => [0.15, 'A carta circula entre os eleitores mais atentos.'] },
+                   { t: 'Faltar', d: 'Evita o risco.', custo: 0, ef: () => [-0.1, 'Sua cadeira vazia vira assunto.'] }], dado: cartaPesos },
+        { ilu: 'urna', titulo: 'A tentação da boca de urna', texto: 'Um cabo eleitoral sugere distribuir santinhos na porta das escolas no dia da eleição. Isso é <b>crime eleitoral</b>.',
+          opcoes: [{ t: 'Fazer a boca de urna', d: 'Grátis, ilegal e arriscado.', custo: 0, ef: s2 => s2.u3 < 0.6 ? [-0.6, 'Você é flagrado(a): multa e notícia ruim no dia da eleição.'] : [0.1, 'Ninguém viu… dessa vez. Mas continua sendo crime.'] },
+                   { t: 'Carreata final permitida', d: 'Custa 2. Barulho dentro da lei, no sábado.', custo: 2, ef: () => [0.35, 'A carreata fecha a campanha com festa.'] },
+                   { t: 'Descansar e votar cedo', d: 'Grátis.', custo: 0, ef: () => [0.05, 'Você chega descansado(a) ao grande dia.'] }], dado: cartaMW }
+      ]
+    ];
+    const quiz = Object.assign(perguntaDebate(s), { campo: 'acertou' });
     const EV = {
       cota: { ilu: 'cota', titulo: 'Imprevisto: “só precisamos do seu nome”', texto: 'O partido precisa cumprir a cota de 30% de mulheres. Ele te inscreveu, mas avisa: o dinheiro do fundo vai para os “puxadores de voto”.',
         opcoes: [{ t: 'Brigar pela sua parte do fundo', d: 'A lei manda dividir o dinheiro. Custa 1 de caixa em advogado.', custo: 1, ef: () => [0.25, 'Você consegue uma parte do fundo. Pouco, mas é seu.'] },
@@ -496,8 +625,7 @@
                  { t: 'Ir sem preparação', d: 'Grátis, mas um erro pesa.', custo: 0, quiz, ef: s2 => s2.acertou ? [0.25, 'Você acerta e sai do debate maior do que entrou.'] : [-0.15, 'Você erra e o corte circula.'] },
                  { t: 'Faltar', d: 'Evita o risco.', custo: 0, ef: () => [-0.1, 'Sua cadeira vazia aparece na TV.'] }], dado: laranjas }
     };
-    R[3] = EV[s.evento];
-    return R;
+    return [0, 1, 2, 3, 4].map(w => w === 3 ? EV[s.evento] : POOL[w][s.cen[w] % POOL[w].length]);
   }
   const custoDe = (op, s) => op.custo === 'tudo' ? s.caixa : op.custo === 'slider' ? Math.min(s.investir, s.caixa) : op.custo;
   function aplicar(s, op) {
@@ -509,6 +637,7 @@
   function semana() {
     fase(4); rolarTopo();
     const r = rodadas(st.c, st)[st.semana];
+    UI.abertura(`Semana ${st.semana + 1} de 5`, r.titulo);
     desenharHud();
     mostrar(`<article class="jg-evento">${ilustracao(r.ilu, r.titulo)}
       <div class="jg-evento-corpo"><p class="jg-chapeu">Fase 5 · A campanha · semana ${st.semana + 1} de 5</p><h3>${r.titulo}</h3><p>${r.texto}</p>
@@ -519,7 +648,7 @@
         <div id="interacao"></div><div id="consequencia"></div></div></article>`);
     const sl = $('sl-inv'); if (sl) sl.oninput = () => { $('sl-out').textContent = sl.value + ' moeda(s)'; };
     document.querySelectorAll('.jg-opcao').forEach(bt => { const go = e => { if (e && e.target.closest('[data-slider]')) return; if (bt.classList.contains('trava') || document.querySelector('.jg-opcoes.feito')) return; escolher(r, +bt.dataset.k); };
-      bt.onclick = go; bt.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
+      bt.onclick = go; bt.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; UI.arrastavel(bt, () => go()); });
   }
   function escolher(r, k) {
     const op = r.opcoes[k];
@@ -527,13 +656,13 @@
     document.querySelectorAll('.jg-opcao').forEach((bt, i) => { bt.classList.toggle('escolhida', i === k); bt.classList.toggle('apagada', i !== k); });
     if (op.custo === 'slider') st.investir = +($('sl-inv') ? $('sl-inv').value : 0);
     const segue = () => concluir(r, k);
-    if (op.mini) minigame(segue); else if (op.quiz) debate(op.quiz, segue); else segue();
+    if (op.mini) minigame(segue, op.mini); else if (op.quiz) debate(op.quiz, segue); else segue();
   }
   // minigame: 10 segundos para conquistar eleitores tocando neles
-  function minigame(fim) {
-    const area = $('interacao');
-    area.innerHTML = `<div class="mini"><div class="mini-topo"><b>Corpo a corpo!</b> Toque nos eleitores para entregar o seu santinho. <span id="mini-t">10,0 s</span><span id="mini-n">0 eleitores</span></div><canvas id="mini-c"></canvas>
-      <button type="button" class="jg-botao" id="mini-go">Começar (10 segundos)</button></div>`;
+  function minigame(fim, cfg) {
+    const area = $('interacao'), T0 = cfg.tempo || 10;
+    area.innerHTML = `<div class="mini"><div class="mini-topo"><b>${esc(cfg.titulo)}</b> ${esc(cfg.txt)} <span id="mini-t">${T0},0 s</span><span id="mini-n">0 pessoas</span></div><canvas id="mini-c"></canvas>
+      <button type="button" class="jg-botao" id="mini-go">Começar (${T0} segundos)</button></div>`;
     area.scrollIntoView({ behavior: PARADO ? 'auto' : 'smooth', block: 'center' });
     const cv = $('mini-c'), ctx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
     cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
@@ -547,16 +676,16 @@
       pessoas.forEach(p => { if (rodando && !p.ok) { p.x += p.vx; p.y += p.vy; if (p.x < 14 || p.x > W - 14) p.vx *= -1; if (p.y < 18 || p.y > H - 18) p.vy *= -1; }
         ctx.fillStyle = p.ok ? cor : '#8f8a99'; ctx.beginPath(); ctx.arc(p.x, p.y - 8, 8, 0, 7); ctx.fill(); ctx.fillRect(p.x - 9, p.y + 2, 18, 16);
         if (p.pulso > 0) { ctx.strokeStyle = cor; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, 26 - p.pulso, 0, 7); ctx.stroke(); p.pulso -= 1; } });
-      if (rodando) { const resta = Math.max(0, 10 - (performance.now() - t0) / 1000); $('mini-t').textContent = dec(resta, 1) + ' s'; if (resta <= 0) { rodando = false; acaba(); } }
+      if (rodando) { const resta = Math.max(0, T0 - (performance.now() - t0) / 1000); $('mini-t').textContent = dec(resta, 1) + ' s'; if (resta <= 0) { rodando = false; acaba(); } }
       requestAnimationFrame(desenha);
     }
     cv.addEventListener('pointerdown', e => { if (!rodando) return; const b = cv.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
       const p = pessoas.find(q => !q.ok && Math.hypot(q.x - x, q.y - y) < 24);
-      if (p) { p.ok = true; p.pulso = 18; n++; bip(700 + Math.min(n, 30) * 30, 0, 0.05); $('mini-n').textContent = n + ' eleitores';
+      if (p) { p.ok = true; p.pulso = 18; n++; bip(700 + Math.min(n, 30) * 30, 0, 0.05); $('mini-n').textContent = n + (n === 1 ? ' pessoa' : ' pessoas');
         if (pessoas.every(q => q.ok)) pessoas.forEach((q, i) => pessoas[i] = nova()); } });
-    function acaba() { st.cliques = n; somFim(); $('mini-go').remove(); area.querySelector('.mini-topo').innerHTML = `<b>Tempo!</b> Você conquistou <b>${n}</b> eleitores.`; setTimeout(() => { vivo = false; fim(); }, 700); }
+    function acaba() { st[cfg.campo] = n; somFim(); if (cfg.conq && n >= 30) UI.conquista('corpo'); $('mini-go').remove(); area.querySelector('.mini-topo').innerHTML = `<b>Tempo!</b> Você alcançou <b>${n}</b> ${n === 1 ? 'pessoa' : 'pessoas'}.`; setTimeout(() => { vivo = false; fim(); }, 700); }
     $('mini-go').onclick = () => { $('mini-go').disabled = true; $('mini-go').textContent = 'Valendo!'; rodando = true; t0 = performance.now(); };
-    if (PARADO) { st.cliques = 8; area.querySelector('.mini-topo').innerHTML = 'Corpo a corpo: 8 eleitores conquistados.'; $('mini-go').remove(); setTimeout(fim, 300); return; }
+    if (PARADO) { st[cfg.campo] = 8; area.querySelector('.mini-topo').innerHTML = '8 pessoas alcançadas.'; $('mini-go').remove(); setTimeout(fim, 300); return; }
     desenha();
   }
   // debate: pergunta sobre os dados da Parte 1
@@ -565,7 +694,7 @@
     area.innerHTML = `<div class="quiz"><p class="jg-chapeu">Ao vivo · pergunta para você</p><h4>${esc(q.q)}</h4><div class="quiz-ops">${q.ops.map((o, i) => `<button type="button" data-i="${i}"><kbd>${'ABCD'[i]}</kbd>${esc(o)}</button>`).join('')}</div><p id="quiz-res"></p></div>`;
     area.scrollIntoView({ behavior: PARADO ? 'auto' : 'smooth', block: 'center' });
     area.querySelectorAll('.quiz-ops button').forEach(b => b.onclick = () => {
-      const certo = q.ops[+b.dataset.i] === q.ok; st.acertou = certo;
+      const certo = q.ops[+b.dataset.i] === q.ok; st[q.campo || 'acertou'] = certo; if (certo) UI.conquista('debate'); else UI.treme();
       area.querySelectorAll('.quiz-ops button').forEach(x => { x.disabled = true; if (q.ops[+x.dataset.i] === q.ok) x.classList.add('certo'); });
       if (!certo) b.classList.add('errado');
       certo ? somFim() : bip(220, 0, 0.35);
@@ -575,10 +704,13 @@
   }
   function concluir(r, k) {
     st.escolhas.push(k);
+    const gasto = custoDe(r.opcoes[k], st), daCarta = document.querySelector('.jg-opcao.escolhida');
     const res = aplicar(st, r.opcoes[k]);
     st.semana++;
     desenharHud(res.antes);
     contar($('jg-num'), res.antes, res.depois); setTimeout(() => moverMedidor(res.depois), 60);
+    const alvoCaixa = document.querySelector('.jg-caixa'); if (gasto > 0) UI.moedas(daCarta, alvoCaixa, gasto); if (gasto < 0) UI.moedas(alvoCaixa, alvoCaixa, -gasto);
+    if (res.depois < res.antes * 0.97) UI.treme(); const nn = $('jg-num'); if (nn) { nn.classList.remove('pop'); void nn.offsetWidth; nn.classList.add(res.depois >= res.antes ? 'pop' : 'pop', res.depois >= res.antes ? 'sobe' : 'desce'); }
     const rel = 100 * (res.depois / res.antes - 1);
     $('consequencia').innerHTML = `<div class="jg-consequencia"><p class="jg-delta ${rel > 0.5 ? 'sobe' : rel < -0.5 ? 'desce' : ''}">${Math.abs(rel) <= 0.5 ? 'Sua chance não mudou' :
         `${rel > 0 ? '▲ +' : '▼ '}${num(rel)}% na sua chance <small>(de ${fmtP(res.antes)} para ${fmtP(res.depois)})</small>`}</p><p>${esc(res.msg)}</p></div>${r.dado()}
@@ -620,6 +752,9 @@
     const c = st.c, { eleito, pF, vFinal } = resultado, v = $('veredito'), inf = info(), d = ufDe(c.uf || '');
     todos.forEach(({ r }, i) => { if (r !== c) $('raia-p-' + i).innerHTML += ` <small class="${r.eleito ? 'real-sim' : ''}">${r.eleito ? 'eleito(a) na vida real' : 'não eleito(a)'}</small>`; });
     eleito ? somFim() : bip(220, 0, 0.5);
+    const p0 = st.hist[0], ganho = pF / p0, estrelas = eleito ? 3 : ganho >= 1.5 ? 2 : 1, nota = ganho >= 2 ? 'A' : ganho >= 1.5 ? 'B' : ganho >= 1.1 ? 'C' : 'D';
+    UI.conquista('primeira'); UI.cargoJogado(cargoDef.k, CARGOS.length);
+    if (eleito) { UI.conquista('eleito'); if (p0 < 0.05) UI.conquista('zebra'); setTimeout(UI.confete, 250); } else UI.treme();
     const B = inf.efVotos;
     const cartaoVotos = inf.ols && vFinal != null ? dado('Quantos votos o seu perfil costuma ter', G.dispersao(doLugar().filter(x => x.votos != null && x !== c), c, vFinal) + `
         <div class="dado-numeros"><div><b>${num(vFinal)}</b><span>seus votos estimados<br>(perfil + campanha)</span></div>${isFinite(d.corte) ? `<div><b>${num(d.corte)}</b><span>votos do eleito com<br>menos votos aqui</span></div>` : ''}
@@ -630,11 +765,13 @@
         '<p>Percentual dos votos válidos no 1º turno. Com tão poucas candidaturas, não dá para ajustar uma regressão só deste cargo: o jogo usa o modelo geral.</p>', 'TSE 2026');
     v.hidden = false;
     v.innerHTML = `<div class="jg-carimbo ${eleito ? 'sim' : 'nao'}">${eleito ? ao(c, 'ELEITO', 'ELEITA') : ao(c, 'NÃO ELEITO', 'NÃO ELEITA')}</div>
+      <div class="placar-final"><div class="estrelas-fim" aria-label="${estrelas} de 3 estrelas">${[1, 2, 3].map(i => `<i class="${i <= estrelas ? 'on' : ''}" style="--d:${i * 220}ms">★</i>`).join('')}</div>
+        <div class="nota-fim"><small>Nota da campanha</small><b>${nota}</b><span>chance ×${dec(ganho, 1)} desde o início</span></div></div>
       <p class="jg-grande-txt">Com a sua campanha, a chance terminou em <b>${fmtP(pF)}</b>: em 1.000 eleições, você ganharia cerca de <b>${num(1000 * pF)}</b>.</p>
       ${c.ficticio ? '' : `<p class="jg-real">Na vida real, ${esc(titulo(c.nome))} ${c.eleito ? `<b>foi ${ao(c, 'eleito', 'eleita')}</b>` : `<b>não foi ${ao(c, 'eleito', 'eleita')}</b>`}${c.votos != null ? ` com ${num(c.votos)} votos` : ''}${c.pct != null && !cargoDef.k.startsWith('Deputado') ? ` (${pct(c.pct)} dos válidos)` : ''}.</p>`}
-      <div class="jg-acoes centro"><button type="button" class="jg-sec" id="b-baixar">Baixar o meu santinho</button></div>
-      ${cartaoVotos}<button type="button" class="jg-botao principal" id="b-gemeo">E se outra pessoa fizesse exatamente a mesma campanha? →</button>`;
-    $('b-baixar').onclick = baixarSantinho;
+      <div class="jg-acoes centro"><button type="button" class="jg-sec" id="b-baixar">Baixar o meu santinho</button><button type="button" class="jg-sec" id="b-denovo-r">Jogar de novo</button></div>
+      ${cartaoVotos}<button type="button" class="jg-botao principal" id="b-gemeo">Ver o gêmeo: outra pessoa, a mesma campanha →</button>`;
+    $('b-baixar').onclick = baixarSantinho; $('b-denovo-r').onclick = cargo;
     $('b-gemeo').onclick = gemeo;
   }
 
@@ -655,7 +792,7 @@
       const a = document.createElement('a'); a.download = 'meu-santinho.png'; a.href = cv.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove();
     };
     x.fillStyle = '#e8dfcf'; x.fillRect(80, 340, 360, 460);
-    const src = J.fotoDe(c);
+    const src = c.avatar ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(J.avatarSVG(c.avatar)) : J.fotoDe(c);
     if (src) { const im = new Image(); im.onload = () => { x.drawImage(im, 80, 340, 360, 460); fecha(); }; im.onerror = fecha; im.src = src; }
     else { texto(c.ficticio ? (c.nome.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'EU') : J.iniciais(c.nome), 260, 620, '900 140px Inter, Arial, sans-serif', cor, 'center'); fecha(); }
   }
@@ -664,13 +801,13 @@
   // 6b. A MESMA CAMPANHA, OUTRO PONTO DE PARTIDA
   // =================================================================
   function gemeo() {
-    rolarTopo();
+    rolarTopo(); UI.conquista('gemeo');
     const c = st.c, priv = !c.mulher && c.raca === 'B', lista = info().lista, medPat = J.mediana(lista.map(x => x.patrimonio || 0));
     const teste = priv ? (x => x.mulher && x.raca === 'N' && !x.mandato && (x.patrimonio || 0) <= medPat) : (x => !x.mulher && x.raca === 'B' && x.mandato && (x.patrimonio || 0) > medPat);
     const t2 = priv ? (x => x.mulher && x.raca === 'N') : (x => !x.mulher && x.raca === 'B');
     const opc = [doLugar().filter(x => x !== c && teste(x)), lista.filter(x => x !== c && teste(x)), doLugar().filter(x => x !== c && t2(x)), lista.filter(x => x !== c && t2(x)), J.DEP.filter(teste)].find(l => l.length) || J.DEP;
     const g = sorteia(comFoto(opc), rng(st.semente + 3)), outro = novoEstado(g, st.semente);
-    Object.assign(outro, { evento: st.evento, cliques: st.cliques, acertou: st.acertou, investir: st.investir, q: st.q });
+    Object.assign(outro, { evento: st.evento, cen: st.cen, u3: st.u3, cliques: st.cliques, cliques2: st.cliques2, acertou: st.acertou, acertou2: st.acertou2, investir: st.investir, q: st.q });
     let semCota = '';
     if (st.evento === 'cota' && !g.mulher) { outro.evento = 'debate'; outro.acertou = true; semCota = `${esc(nomeDe(g))} não passou pelo imprevisto da cota: só candidatas passam por isso. `; }
     const notas = [];
@@ -767,7 +904,9 @@
       liv.forEach(i => e[i] = (k - ch) * peso[i] / s); if (!e.some(x => x > 1)) break; e = e.map(x => Math.min(x, 1)); } return e.map(x => Math.min(x, 1)); }
     function reservar(e, l, t, alvo, k) { const ng = e.reduce((s, x, i) => s + (t(l[i]) ? x : 0), 0); if (ng >= alvo || !ng) return e; return e.map((x, i) => t(l[i]) ? x * alvo / ng : x * (k - alvo) / (k - ng)); }
     const re = J.DEP.filter(c => c.eleito), em = n => Math.round(513 * n / re.length), real = { m: em(re.filter(c => c.mulher).length), n: em(re.filter(c => c.raca === 'N').length), md: em(re.filter(c => c.mandato).length) };
+    let mexeu = false;
     function simular() {
+      if (mexeu) UI.conquista('regras'); mexeu = true;
       const soma = { mn: 0, mo: 0, hn: 0, ho: 0 }; let md = 0, faltou = false;
       for (const u in porUF) { const l = porUF[u], k = vagas[u]; if (!k) continue;
         const ch = l.map(c => logistica(b('Intercept') + b('C(cargo)[T.Deputado Federal]') + regra.genero * (c.mulher ? 0 : b('C(genero)[T.Masculino]')) + regra.raca * (c.raca === 'B' ? 0 : b('C(raca)[T.' + (c.raca === 'N' ? 'Negra' : 'Outras') + ']'))
@@ -812,12 +951,13 @@
         <li><b>As semanas são regras de jogo:</b> só o ponto de partida, o efeito do partido, o caixa e as perguntas do debate vêm diretamente dos dados.</li></ul></div>
       <div class="jg-acoes"><button type="button" class="jg-botao principal" id="b-denovo">Jogar de novo</button><button type="button" class="jg-sec" id="b-baixar2">Baixar o meu santinho</button>
         <a class="jg-sec" href="dossie.html#ato6">A Presidência →</a><a class="jg-sec" href="dossie.html#placar">O placar dos eleitos →</a><a class="jg-sec" href="dossie.html#busca">Procurar um candidato →</a><a class="jg-sec" href="dossie.html">Dossiê completo →</a></div>
-      <p class="creditos">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · [seu nome] · 2026<br>Dados: TSE (candidaturas, bens, votação, fotos e prestação de contas de 2026) e IBGE (Censo 2022).</p></div>`);
+      <p class="creditos">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · Carolina Carpenter · 2026<br>Dados: TSE (candidaturas, bens, votação, fotos e prestação de contas de 2026) e IBGE (Censo 2022).</p></div>`);
     $('b-denovo').onclick = cargo; $('b-baixar2').onclick = baixarSantinho;
   }
 
   // ---------- teclado: → avança, 1 2 3 escolhem, A B C D respondem; na urna, os números vão para a urna ----------
   document.addEventListener('keydown', e => {
+    if (UI.aberto() || document.querySelector('.cortina')) return;
     if (teclado && teclado(e)) { e.preventDefault(); return; }
     if (e.target.closest && e.target.closest('input, select, textarea')) return;
     if (/^[1-3]$/.test(e.key)) { const op = document.querySelectorAll('.jg-opcoes:not(.feito) .jg-opcao:not(.trava)')[+e.key - 1]; if (op) op.click(); }
@@ -830,5 +970,10 @@
     ['fotos.js?v=7', 'fotos_jogo.js?v=1'].forEach(src => { const s = document.createElement('script'); s.src = src; s.onload = () => { if (st && !hud.hidden) desenharHud(); }; document.body.appendChild(s); });
   }, 400));
 
+  const botaoMenu = document.createElement('button');
+  botaoMenu.className = 'botao-menu'; botaoMenu.type = 'button'; botaoMenu.innerHTML = '<i></i><i></i><i></i><span>MENU</span>'; botaoMenu.setAttribute('aria-label', 'Menu');
+  botaoMenu.onclick = () => UI.menu({ reiniciar: capa });
+  document.body.appendChild(botaoMenu);
+  UI.cenario();
   capa();
 })();

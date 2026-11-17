@@ -38,8 +38,30 @@
     <a href="#ato5" data-nome="A Câmara possível">5</a>
     <a href="#ato6" data-nome="A Presidência">6</a>
     <a href="#placar" data-nome="O placar dos eleitos">7</a>
-    <a href="#busca" data-nome="Procure um candidato">8</a>
   </nav>
+
+  <!-- ===== BUSCA (barra no topo) ===== -->
+  <section id="busca" class="barra-busca" aria-label="Procure um candidato">
+    <div class="bb-linha">
+      <p class="bb-titulo">Procure qualquer candidatura de 2026</p>
+      <div class="busca-caixa">
+        <input id="busca-campo" type="search" placeholder="Digite um nome de urna…" autocomplete="off"
+               aria-label="Buscar candidato pelo nome de urna">
+        <button id="busca-sorte" type="button">Me surpreenda</button>
+        <ul id="busca-sugestoes" class="sugestoes" role="listbox"></ul>
+      </div>
+    </div>
+    <p class="bb-explica" id="busca-explica">Estão aqui todas as candidaturas que foram para a urna, eleitas ou não.</p>
+    <div id="santinho" class="santinho-area"></div>
+  </section>
+  <style>
+    .barra-busca{position:relative;z-index:5;padding:70px clamp(16px,4vw,48px) 18px;background:#16141d;color:#f3eee4;border-bottom:1px solid #2e2b38}
+    .barra-busca .bb-linha{max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+    .barra-busca .bb-titulo{margin:0;font:700 15px Inter,Arial,sans-serif;letter-spacing:.04em}
+    .barra-busca .busca-caixa{flex:1;min-width:260px;margin:0}
+    .barra-busca .bb-explica{max-width:1100px;margin:6px auto 0;font:13px Inter,Arial,sans-serif;color:#a9a3b0}
+    .barra-busca .santinho-area{max-width:1100px;margin:0 auto}
+  </style>
 
   <!-- ===== CAPA ===== -->
   <header class="capa escuro">
@@ -322,25 +344,6 @@
     <p class="nota" id="placar-nota"></p>
   </section>
 
-  <!-- ===== ATO 8: A BUSCA ===== -->
-  <section id="busca" class="ato">
-    <div class="cabeca-ato">
-      <span class="num-ato">08</span>
-      <div>
-        <p class="numero-ato">Procure um candidato</p>
-        <h2>Ache qualquer candidatura de 2026</h2>
-      </div>
-    </div>
-    <p class="explica" id="busca-explica">Digite o nome de urna. Estão aqui todas as candidaturas
-      que foram para a urna, eleitas ou não.</p>
-    <div class="busca-caixa">
-      <input id="busca-campo" type="search" placeholder="Digite um nome de urna…" autocomplete="off"
-             aria-label="Buscar candidato pelo nome de urna">
-      <button id="busca-sorte" type="button">Me surpreenda</button>
-      <ul id="busca-sugestoes" class="sugestoes" role="listbox"></ul>
-    </div>
-    <div id="santinho" class="santinho-area"></div>
-  </section>
 
   <!-- letreiro de apuração -->
   <div class="letreiro letreiro-2" aria-hidden="true"><div class="letreiro-faixa"></div></div>
