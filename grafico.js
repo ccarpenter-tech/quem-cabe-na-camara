@@ -1175,23 +1175,8 @@ window.addEventListener('load', () => setTimeout(() => {
 })();
 
 // =====================================================================
-// 21. APP NO CELULAR (PWA): funciona offline e pode ser instalado
+// 21. APP NO CELULAR (PWA): funciona offline (o botão de instalar fica na tela inicial do jogo)
 // =====================================================================
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js');
 }
-(function botaoInstalar() {
-  const botao = document.getElementById('instalar');
-  if (!botao) return;
-  let pedido = null;
-  window.addEventListener('beforeinstallprompt', e => {        // Android e Chrome no computador
-    e.preventDefault(); pedido = e; botao.hidden = false;
-  });
-  botao.addEventListener('click', async () => {
-    if (!pedido) return;
-    pedido.prompt(); await pedido.userChoice; pedido = null; botao.hidden = true;
-  });
-  const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const instalado = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  if (iphone && !instalado) document.getElementById('dica-ios').hidden = false;   // no iPhone, só pelo Safari
-})();

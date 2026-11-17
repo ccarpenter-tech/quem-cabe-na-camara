@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="jogo.css?v=6">
+  <link rel="stylesheet" href="jogo.css?v=7">
 </head>
 <body>
   <ol id="fases" hidden aria-label="Fases do jogo"></ol>
@@ -33,10 +33,14 @@
   <script src="dados.js?v=8"></script>
   <script src="jogo-dados.js?v=5"></script>
   <script src="jogo-ui.js?v=3"></script>
-  <script src="jogo.js?v=7"></script>
+  <script src="jogo.js?v=8"></script>
   <script>
     // app no celular: guarda os arquivos para abrir rápido e funcionar sem internet
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js');
+    // botão "Baixar como app": o navegador avisa quando o site pode ser instalado (Android e Chrome/Edge no computador)
+    window.PEDIDO_APP = null;
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.PEDIDO_APP = e; window.dispatchEvent(new Event('app-instalavel')); });
+    window.addEventListener('appinstalled', () => { window.PEDIDO_APP = null; window.dispatchEvent(new Event('app-instalavel')); });
   </script>
 </body>
 </html>

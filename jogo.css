@@ -644,3 +644,8 @@ body.treme #app { animation: treme .45s; }
 .av-partido button small{opacity:.7;font-size:.75em}
 .av-partido button.ativo{background:#c9a8f5;color:#1c1626;border-color:#c9a8f5}
 .av-partido>span small{display:block;font-weight:400;opacity:.7;font-size:.75em;text-transform:none;letter-spacing:0}
+
+/* v4.2: baixar como app na tela inicial */
+.tj-ios { max-width: 320px; margin: 4px auto 0; font: 14px/1.45 var(--corpo); color: var(--suave); text-align: center; }
+.tj-ios b { color: var(--luz); }
+#b-app[hidden], .tj-ios[hidden] { display: none; }

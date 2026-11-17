@@ -134,6 +134,7 @@
           <div class="tj-menu" id="tj-menu" hidden>
             <button type="button" class="mb grande principal" id="b-jogar">▶ Jogar</button>
             <button type="button" class="mb" id="b-como">Como funciona</button>
+            <button type="button" class="mb" id="b-app" hidden>📲 Baixar como app</button>
           </div>
         </div>
         <a class="tj-estudo" href="dossie.html">Saber mais sobre o estudo →</a>
@@ -142,7 +143,23 @@
     const abre = () => { $('b-start').hidden = true; $('tj-menu').hidden = false; somFim(); $('b-jogar').focus(); };
     $('b-start').onclick = abre;
     $('b-jogar').onclick = peneira; $('b-como').onclick = UI.telaComo;
+    botaoApp();
   }
+  // ---------- baixar como app (PWA) ----------
+  const IPHONE = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const INSTALADO = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  function botaoApp() {
+    const b = $('b-app'); if (!b) return;
+    b.hidden = INSTALADO() || !(window.PEDIDO_APP || IPHONE);
+    b.onclick = async () => {
+      if (window.PEDIDO_APP) { const p = window.PEDIDO_APP; p.prompt(); await p.userChoice; window.PEDIDO_APP = null; botaoApp(); }
+      else if (IPHONE) UI.modal(`<div class="painel-menu"><p class="jg-chapeu">Baixar como app</p><h2>No iPhone, pelo Safari</h2>
+        <ol class="como"><li>Abra este site no <b>Safari</b>.</li><li>Toque em <b>Compartilhar</b> (o quadrado com a seta para cima).</li><li>Escolha <b>Adicionar à Tela de Início</b>.</li></ol>
+        <p class="jg-dica">O jogo vira um ícone no celular e abre como app, até sem internet.</p>
+        <div class="jg-acoes"><button type="button" class="jg-botao principal" data-fecha>Entendi</button></div></div>`);
+    };
+  }
+  window.addEventListener('app-instalavel', botaoApp);
   function chuva() {
     const cv = $('chuva'); if (!cv) return;
     const ctx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
@@ -1057,7 +1074,7 @@
         <li><b>As semanas são regras de jogo:</b> só o ponto de partida, o efeito do partido, o caixa e as perguntas do debate vêm diretamente dos dados.</li></ul></div>
       <div class="jg-acoes"><button type="button" class="jg-botao principal" id="b-denovo">Jogar de novo</button><button type="button" class="jg-sec" id="b-baixar2">Baixar o meu santinho</button>
         <a class="jg-sec" href="dossie.html#ato5">Ver a Câmara e mudar as regras →</a><a class="jg-sec" href="dossie.html">Saber mais sobre o estudo →</a></div>
-      <p class="creditos">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · Carolina Carpenter · 2026<br>Dados: TSE (candidaturas, bens, votação, fotos e prestação de contas de 2026) e IBGE (Censo 2022).</p></div>`);
+      <p class="creditos">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · [seu nome] · 2026<br>Dados: TSE (candidaturas, bens, votação, fotos e prestação de contas de 2026) e IBGE (Censo 2022).</p></div>`);
     $('b-denovo').onclick = cargo; $('b-baixar2').onclick = baixarSantinho;
   }
 
