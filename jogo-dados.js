@@ -1,6 +1,6 @@
 // =====================================================================
 // Quem cabe na Câmara? – O JOGO
-// Parte 1: os dados e as estatísticas da Parte 1, recalculadas no navegador a partir do dados.js
+// Os dados e as estatísticas do estudo, recalculadas no navegador a partir do dados.js
 // (assim cada número do jogo sai da mesma base usada no Colab).
 // =====================================================================
 const J = (function () {
@@ -32,7 +32,10 @@ const J = (function () {
   // ---------- fotos ----------
   const chaveFoto = c => `${c.nome}|${c.uf || 'BR'}|${c.cargo || 'Presidente'}`;
   const iniciais = n => n.split(' ').filter(p => p.length > 2 || n.split(' ').length === 1).map(p => p[0]).slice(0, 2).join('').toUpperCase();
-  const fotoDe = c => { if (!c || c.ficticio) return null; const k = chaveFoto(c); return (window.FOTOS && window.FOTOS[k]) || (window.FOTOS_JOGO && window.FOTOS_JOGO[k]); };
+  const fotoDe = c => { if (!c || c.ficticio) return null; const k = chaveFoto(c), k2 = `${c.nome}|BR|${c.cargo}`;
+    for (const F of [window.FOTOS_UF, window.FOTOS, window.FOTOS_JOGO]) if (F && (F[k] || (c.cargo === 'Presidente' && F[k2]))) return F[k] || F[k2];
+    return null; };
+  const numeroDe = c => { if (!c || c.ficticio || !window.NUMEROS) return null; return window.NUMEROS[chaveFoto(c)] || window.NUMEROS[`${c.nome}|BR|${c.cargo}`] || null; };
   const corGrupo = c => c.mulher ? (c.raca === 'N' ? '#a66cff' : '#cfb3ff') : (c.raca === 'N' ? '#8f8a99' : '#d9d2c4');
   // avatar desenhado (para quem cria o próprio candidato)
   function avatarSVG(a) {
@@ -60,7 +63,7 @@ const J = (function () {
       : `<span class="jg-foto jg-sem ${classe}" style="--anel:${corGrupo(c)}" aria-hidden="true">${c.ficticio ? 'EU' : esc(iniciais(c.nome))}</span>`;
   }
 
-  // ---------- o modelo logístico (Parte 1) ----------
+  // ---------- o modelo logístico do estudo ----------
   function termos(c) {
     return {
       mandato: c.mandato ? b('C(tem_mandato)[T.Sim]') : 0,
@@ -101,7 +104,7 @@ const J = (function () {
   }
   const or = k => [Math.exp(b(k)), IC[k] ? Math.exp(IC[k][0]) : null, IC[k] ? Math.exp(IC[k][1]) : null];
 
-  // ---------- estatísticas da Parte 1 ----------
+  // ---------- estatísticas do estudo ----------
   const S = {};
   S.n = TODOS.length; S.nEl = TODOS.filter(c => c.eleito).length;
   S.nDep = DEP.length; S.nDepEl = DEP.filter(c => c.eleito).length;
@@ -322,5 +325,5 @@ const J = (function () {
   };
 
   return { D, M, IC, TODOS, DEP, S, UF, PART, taxaPartido, partidosOrd, termos, base, chance, chanceIC, calibrado, cargoInfo, or, votosPrevistos, lp,
-    num, dec, pct, fmtP, reais, esc, logistica, logit, lim, mediana, chaveFoto, iniciais, fotoDe, retrato, avatarSVG, corGrupo, G, T };
+    num, dec, pct, fmtP, reais, esc, logistica, logit, lim, mediana, chaveFoto, iniciais, fotoDe, numeroDe, retrato, avatarSVG, corGrupo, G, T };
 })();

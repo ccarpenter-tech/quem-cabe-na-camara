@@ -12,7 +12,7 @@ const UI = (function () {
   const ler = (k, padrao) => { try { const v = localStorage.getItem('qcc-' + k); return v ? JSON.parse(v) : (mem[k] ?? padrao); } catch (e) { return mem[k] ?? padrao; } };
   const gravar = (k, v) => { mem[k] = v; try { localStorage.setItem('qcc-' + k, JSON.stringify(v)); } catch (e) { } };
 
-  // ---------- as 12 cartas de dado: cada uma é uma análise da Parte 1 ----------
+  // ---------- as cartas de dado: cada uma é uma análise do estudo ----------
   const CARTAS = [
     { id: 1, nome: 'A peneira', analise: 'Tabela cruzada e V de Cramér', onde: 'Fase 1', chave: ['Candidatos → eleitos'] },
     { id: 2, nome: 'O filtro por cargo', analise: 'Tabela cruzada por cargo', onde: 'Fase 2', chave: ['O filtro muda de cargo'] },
@@ -31,7 +31,8 @@ const UI = (function () {
     { id: 15, nome: 'Quem já está dentro', analise: 'Tabela cruzada mandato × eleito', onde: 'Semana 3', chave: ['Quem já está dentro'] },
     { id: 16, nome: 'O diploma pesa?', analise: 'Tabela cruzada escolaridade × eleito', onde: 'Semana 1', chave: ['O diploma pesa?'] }
   ];
-  const album = ler('album', {});              // id → html da carta
+  const album = ler('album', {});
+  let ganhou = null;                           // o jogo é avisado quando sai carta nova (vira uma dica)              // id → html da carta
   const numero = id => '#' + String(id).padStart(2, '0');
 
   // recebe o cartão "o dado por trás" e devolve a carta colecionável (e guarda no álbum)
@@ -40,7 +41,7 @@ const UI = (function () {
     if (!c) return html;
     const nova = !album[c.id];
     album[c.id] = html; gravar('album', album);
-    if (nova) { setTimeout(() => abrirCarta(c.id, true), 700); if (CARTAS.every(x => album[x.id])) setTimeout(() => conquista('album'), 2500); }
+    if (nova) { if (ganhou) ganhou(c); setTimeout(() => abrirCarta(c.id, true), 700); if (CARTAS.every(x => album[x.id])) setTimeout(() => conquista('album'), 2500); }
     return `<button type="button" class="carta-mini ${nova ? 'nova' : ''}" data-carta="${c.id}" style="--d:${c.id}">
       <span class="cm-num">${numero(c.id)}</span><span class="cm-txt"><small>${nova ? 'Nova carta de dado!' : 'Carta de dado'}</small><b>${esc(c.nome)}</b><em>${esc(c.analise)}</em></span><span class="cm-abrir">Ver carta</span></button>`;
   }
@@ -57,7 +58,7 @@ const UI = (function () {
     ['primeira', 'Primeira campanha', 'Chegue ao dia da eleição'], ['eleito', 'Primeira vitória', 'Seja eleito(a)'], ['zebra', 'Zebra!', 'Vença com menos de 5% de chance inicial'],
     ['urna', 'Registro na urna', 'Registre a sua própria candidatura'], ['corpo', '30 eleitores no corpo a corpo', 'Conquiste 30 eleitores no minigame do corpo a corpo'],
     ['debate', 'Mandou bem no debate', 'Acerte a pergunta do debate'], ['gemeo', 'Olhou no espelho', 'Veja a mesma campanha com outro perfil'],
-    ['regras', 'Mudou as regras', 'Use o simulador da Câmara'], ['cargos', 'Todos os cargos', 'Jogue com os 5 cargos'], ['album', 'Álbum completo', 'Desbloqueie as 16 cartas de dado']
+    ['dica', 'Leitor de dados', 'Use uma carta de dado como dica'], ['cargos', 'Todos os cargos', 'Jogue com os 5 cargos'], ['album', 'Álbum completo', 'Desbloqueie as 16 cartas de dado']
   ];
   const feitas = ler('conquistas', {});
   function conquista(id) {
@@ -87,7 +88,7 @@ const UI = (function () {
 
   function telaAlbum() {
     const n = CARTAS.filter(c => album[c.id]).length;
-    modal(`<div class="painel-menu"><p class="jg-chapeu">Álbum de dados · ${n} de ${CARTAS.length}</p><h2>Cada carta é uma análise da Parte 1</h2>
+    modal(`<div class="painel-menu"><p class="jg-chapeu">Álbum de dados · ${n} de ${CARTAS.length}</p><h2>Cada carta é uma análise do estudo</h2><p class="jg-dica">Toda carta nova vale uma <b>dica</b> na campanha: use a dica para revelar o efeito escondido das escolhas da semana. Quanto mais cartas no álbum, mais dicas você começa a partida.</p>
       <div class="album">${CARTAS.map(c => album[c.id] ? `<button type="button" class="album-carta" data-ver="${c.id}"><span>${numero(c.id)}</span><b>${esc(c.nome)}</b><em>${esc(c.analise)}</em></button>`
         : `<div class="album-carta trancada"><span>${numero(c.id)}</span><b>?</b><em>Desbloqueie em: ${esc(c.onde)}</em></div>`).join('')}</div>
       <button type="button" class="jg-botao" data-fecha>Fechar</button></div>`, 'menu');
@@ -102,9 +103,9 @@ const UI = (function () {
   function telaComo() {
     modal(`<div class="painel-menu"><p class="jg-chapeu">Como funciona</p><h2>Um jogo feito de estatística</h2>
       <ul class="como">
-        <li><b>A sua chance</b> vem da regressão logística da Parte 1: cargo, gênero, raça, escolaridade, patrimônio e mandato.</li>
+        <li><b>A sua chance</b> vem da regressão logística do estudo: cargo, gênero, raça, escolaridade, patrimônio e mandato.</li>
         <li><b>Os candidatos são reais</b>: dados do TSE de 2026, com fotos oficiais.</li>
-        <li><b>As cartas de dado</b> são as análises da Parte 1: tabelas cruzadas, V de Cramér, medianas, Mann-Whitney, Spearman, regressões e curva ROC.</li>
+        <li><b>As cartas de dado</b> são as análises do estudo: tabelas cruzadas, V de Cramér, medianas, Mann-Whitney, Spearman, regressões e curva ROC. Cada carta nova vira uma <b>dica</b>: ela revela quanto cada escolha da semana mexe na sua chance.</li><li><b>É difícil, como na vida real:</b> poucos candidatos se elegem, e cada moeda conta.</li>
         <li><b>As semanas de campanha</b> são regras de jogo, iguais para todo mundo. Só o ponto de partida muda.</li>
         <li><b>No teclado:</b> → avança, 1 2 3 escolhem as cartas, A B C D respondem o debate, Esc fecha janelas.</li></ul>
       <button type="button" class="jg-botao" data-fecha>Entendi</button></div>`, 'menu');
@@ -113,7 +114,7 @@ const UI = (function () {
     modal(`<div class="painel-menu menu-pausa"><p class="jg-chapeu">Pausa</p><h2>Menu</h2>
       <div class="menu-botoes"><button type="button" class="mb" data-fecha>▶ Continuar</button><button type="button" class="mb" id="m-album">Álbum de dados</button>
         <button type="button" class="mb" id="m-conq">Conquistas</button><button type="button" class="mb" id="m-como">Como funciona</button>
-        <a class="mb" href="dossie.html">Dossiê completo</a><button type="button" class="mb perigo" id="m-reini">Recomeçar do início</button></div></div>`, 'menu');
+        <a class="mb" href="dossie.html">Saber mais sobre o estudo</a><button type="button" class="mb perigo" id="m-reini">Recomeçar do início</button></div></div>`, 'menu');
     document.getElementById('m-album').onclick = telaAlbum; document.getElementById('m-conq').onclick = telaConquistas; document.getElementById('m-como').onclick = telaComo;
     document.getElementById('m-reini').onclick = () => { fecharModal(); acoes.reiniciar(); };
   }
@@ -186,6 +187,6 @@ const UI = (function () {
     document.body.prepend(d);
   }
 
-  return { CARTAS, CONQ, carta, abrirCarta, conquista, cargoJogado, modal, fecharModal, aberto, telaAlbum, telaConquistas, telaComo, menu,
+  return { aoGanharCarta: f => { ganhou = f; }, CARTAS, CONQ, carta, abrirCarta, conquista, cargoJogado, modal, fecharModal, aberto, telaAlbum, telaConquistas, telaComo, menu,
     trilha, abertura, treme, moedas, confete, vibrar, arrastavel, cenario, album, feitas };
 })();
