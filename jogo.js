@@ -1053,7 +1053,7 @@
         <li><b>As semanas são regras de jogo:</b> só o ponto de partida, o efeito do partido, o caixa e as perguntas do debate vêm diretamente dos dados.</li></ul></div>
       <div class="jg-acoes"><button type="button" class="jg-botao principal" id="b-denovo">Jogar de novo</button><button type="button" class="jg-sec" id="b-baixar2">Baixar o meu santinho</button>
         <a class="jg-sec" href="dossie.html#ato5">Ver a Câmara e mudar as regras →</a><a class="jg-sec" href="dossie.html">Saber mais sobre o estudo →</a></div>
-      <p class="creditos">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · [seu nome] · 2026<br>Dados: TSE (candidaturas, bens, votação, fotos e prestação de contas de 2026) e IBGE (Censo 2022).</p></div>`);
+      <p class="creditos">Projeto A2 · Métodos Estatísticos Aplicados às Ciências Sociais · Carolina Carpenter · 2026<br>Dados: TSE (candidaturas, bens, votação, fotos e prestação de contas de 2026) e IBGE (Censo 2022).</p></div>`);
     $('b-denovo').onclick = cargo; $('b-baixar2').onclick = baixarSantinho;
   }
 
