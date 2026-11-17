@@ -300,10 +300,13 @@
   const ROUPAS = ['#7b2cbf', '#e2620f', '#1f8a5b', '#2459c4', '#c2185b', '#2b2b33'];
   function avatarAleatorio(sem) { const r = rng(sem || Math.floor(Math.random() * 1e9)), p = l => l[Math.floor(r() * l.length)];
     return { pele: p(PELES), cabelo: p(CABELOS)[0], corCabelo: p(CORES_CAB), acessorio: p(ACESS)[0], roupa: p(ROUPAS) }; }
-  let avatar = null, nomeUrna = '';
+  let avatar = null, nomeUrna = '', partidoEsc = null;
   function criar() {
     rolarTopo();
     avatar = avatar || avatarAleatorio();
+    const partidos = Object.keys(J.PART).sort((x, y) => x.localeCompare(y, 'pt'));
+    if (!partidoEsc || !J.PART[partidoEsc]) partidoEsc = J.partidosOrd[Math.floor(Math.random() * J.partidosOrd.length)] || partidos[0];
+    const chipPart = s => `<button type="button" data-p="${esc(s)}" class="${s === partidoEsc ? 'ativo' : ''}"><b>${esc(s)}</b> <small>${J.PART[s].n >= 15 ? fmtP(J.taxaPartido(s)) : 'poucos dados'}</small></button>`;
     const linha = (rot, campo, ops, tipo) => `<div class="campo av-campo" data-campo="${campo}"><span>${rot}</span><div>${ops.map(o => { const v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : '';
       return tipo === 'cor' ? `<button type="button" class="amostra ${avatar[campo] === v ? 'ativo' : ''}" data-v="${v}" style="--c:${v}" aria-label="cor ${v}"></button>` : `<button type="button" data-v="${v}" class="${avatar[campo] === v ? 'ativo' : ''}">${t}</button>`; }).join('')}</div></div>`;
     mostrar(`<div class="jg-tela"><p class="jg-chapeu">Fase 4 · Crie o seu candidato</p><h2>Monte o seu avatar</h2>
@@ -312,33 +315,34 @@
         <div class="criador-op">
           <label class="campo"><span>Nome de urna</span><input type="text" id="av-nome" maxlength="22" value="${esc(nomeUrna)}" placeholder="Como você quer aparecer na urna" autocomplete="off"></label>
           ${linha('Tom de pele', 'pele', PELES, 'cor')}${linha('Cabelo', 'cabelo', CABELOS)}${linha('Cor do cabelo', 'corCabelo', CORES_CAB, 'cor')}${linha('Acessórios', 'acessorio', ACESS)}${linha('Cor da roupa', 'roupa', ROUPAS, 'cor')}
+          <div class="campo av-partido"><span>Partido <small>(% = quanto o partido elegeu entre seus candidatos a deputado federal)</small></span><div>${partidos.map(chipPart).join('')}</div></div>
         </div></div>
       <p class="jg-dica" id="av-aviso"></p>
       <div class="jg-acoes"><button type="button" class="jg-botao principal" id="av-ok">Ir para a urna →</button><button type="button" class="jg-sec" id="volta-perfil">← Voltar</button></div></div>`);
     const atualiza = () => { $('av-previa').innerHTML = J.avatarSVG(avatar); };
     document.querySelectorAll('.av-campo').forEach(cp => cp.querySelectorAll('button').forEach(b => b.onclick = () => { avatar[cp.dataset.campo] = b.dataset.v; somTecla();
       cp.querySelectorAll('button').forEach(x => x.classList.toggle('ativo', x === b)); atualiza(); }));
+    document.querySelectorAll('.av-partido button').forEach(b => b.onclick = () => { partidoEsc = b.dataset.p; somTecla();
+      document.querySelectorAll('.av-partido button').forEach(x => x.classList.toggle('ativo', x === b)); });
     $('av-sorte').onclick = () => { avatar = avatarAleatorio(); criar(); };
     $('av-nome').oninput = e => { nomeUrna = e.target.value; };
     $('volta-perfil').onclick = perfil;
-    $('av-ok').onclick = () => { const n = $('av-nome').value.trim(); if (!n) { $('av-aviso').textContent = 'Escreva o seu nome de urna antes de seguir.'; $('av-nome').focus(); return; } nomeUrna = n; registrar(n, Object.assign({}, avatar)); };
+    $('av-ok').onclick = () => { const n = $('av-nome').value.trim(); if (!n) { $('av-aviso').textContent = 'Escreva o seu nome de urna antes de seguir.'; $('av-nome').focus(); return; } nomeUrna = n; registrar(n, Object.assign({}, avatar), partidoEsc); };
     setTimeout(() => $('av-nome') && $('av-nome').focus(), 100);
   }
-  function registrar(nome, av) {
+  function registrar(nome, av, partido) {
     rolarTopo();
-    const ord = J.partidosOrd, meio = ord[Math.floor(ord.length / 2)];
     mostrar(`<div class="jg-tela"><p class="jg-chapeu">Fase 4 · Registro de candidatura</p><h2>Agora registre ${esc(nome)} na urna</h2>
       <p class="jg-lead">Use o teclado da urna (ou o do computador): os números escolhem, <b>CONFIRMA</b> segue, <b>CORRIGE</b> apaga.</p><div id="urna-reg"></div></div>`);
     urna($('urna-reg'), { cabeca: 'REGISTRO · ' + titulo(cargoDef.nome[0]).toUpperCase(), passos: [
       { tipo: 'numero', campo: 'numero', titulo: `Seu número de candidato (${cargoDef.dig} dígitos)`, digitos: cargoDef.dig, mostra: d => `<div class="u-cand"><span class="jg-foto jg-avatar jg-foto-rival">${J.avatarSVG(av)}</span><div><b>${esc(nome)}</b><span>número ${esc(d)}</span></div></div>` },
-      { tipo: 'opcoes', campo: 'partido', titulo: 'Seu partido', opcoes: [[ord[0], `Um partido grande (${ord[0]})`], [meio, `Um partido médio (${meio})`], [ord[ord.length - 1], `Um partido pequeno (${ord[ord.length - 1]})`]] },
       { tipo: 'opcoes', campo: 'genero', titulo: 'Gênero', opcoes: [['F', 'Mulher'], ['M', 'Homem']] },
       { tipo: 'opcoes', campo: 'raca', titulo: 'Cor ou raça (autodeclarada)', opcoes: [['N', 'Preta ou parda'], ['B', 'Branca'], ['O', 'Amarela ou indígena']] },
       { tipo: 'opcoes', campo: 'idade', titulo: 'Idade', opcoes: [['24', 'Até 29 anos'], ['37', '30 a 44 anos'], ['52', '45 a 59 anos'], ['66', '60 anos ou mais']] },
       { tipo: 'opcoes', campo: 'superior', titulo: 'Ensino superior completo?', opcoes: [['1', 'Sim'], ['0', 'Não']] },
       { tipo: 'opcoes', campo: 'pat', titulo: 'Patrimônio (soma dos seus bens)', opcoes: [['0', 'Nenhum bem'], ['40000', 'Até R$ 100 mil'], ['350000', 'R$ 100 mil a R$ 1 milhão'], ['3000000', 'R$ 1 a 10 milhões'], ['25000000', 'Mais de R$ 10 milhões']] },
       { tipo: 'opcoes', campo: 'mandato', titulo: 'Você já tem mandato político?', opcoes: [['0', 'Não'], ['1', 'Sim']] }
-    ], aoFim: r => { UI.conquista('urna'); ficha({ ficticio: true, nome, avatar: av, cargo: cargoReal(), uf: cargoDef.nac ? null : ufEscolhida, partido: r.partido, mulher: r.genero === 'F', raca: r.raca,
+    ], aoFim: r => { UI.conquista('urna'); ficha({ ficticio: true, nome, avatar: av, cargo: cargoReal(), uf: cargoDef.nac ? null : ufEscolhida, partido, mulher: r.genero === 'F', raca: r.raca,
         superior: r.superior === '1', patrimonio: +r.pat, mandato: r.mandato === '1', idade: +r.idade, eleito: false, votos: null }, { numero: r.numero }); } });
   }
 

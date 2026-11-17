@@ -637,3 +637,10 @@ body.treme #app { animation: treme .45s; }
 .jg-santinho[data-estilo="Moderno"] h3 { color: #f3eee4; } .jg-santinho[data-estilo="Moderno"] dd { color: #dcd5e3; } .jg-santinho[data-estilo="Moderno"] dl div { border-color: #3d3452; }
 .jg-santinho[data-estilo="Retrô"] { background: linear-gradient(160deg, #f6e7b6, #e7cf86); filter: sepia(.15); }
 @media (max-width: 760px) { .tj-estudo { bottom: 40px; font-size: 13px; } }
+
+/* v4.1 escolha de partido no criador */
+.av-partido>div{display:flex;flex-wrap:wrap;gap:6px;max-height:190px;overflow-y:auto;padding:2px}
+.av-partido button{font:inherit;font-size:.82rem;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
+.av-partido button small{opacity:.7;font-size:.75em}
+.av-partido button.ativo{background:#c9a8f5;color:#1c1626;border-color:#c9a8f5}
+.av-partido>span small{display:block;font-weight:400;opacity:.7;font-size:.75em;text-transform:none;letter-spacing:0}
